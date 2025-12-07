@@ -111,6 +111,79 @@ def construct_paths(base_path: str, source_prefix: str = "dev", destination_pref
     return source_path, destination_path
 
 
+def extract_component_identifier(component_name: str) -> str:
+    """
+    Extract a normalized component identifier from component name for matching.
+    Removes version numbers, prefixes, and normalizes to lowercase.
+
+    Args:
+        component_name: Full component name (e.g., "KP-TroutsTreasure-V2-11")
+
+    Returns:
+        Normalized identifier (e.g., "troutstreasure")
+
+    Example:
+        >>> extract_component_identifier("KP-TroutsTreasure-V2-11")
+        'troutstreasure'
+        >>> extract_component_identifier("C2ServiceWrapper-202")
+        'c2servicewrapper'
+        >>> extract_component_identifier("KP-Phaser-3.86.0")
+        'phaser'
+        >>> extract_component_identifier("KP-SlotMachineV2-5")
+        'slotmachine'
+    """
+    # Remove version numbers at the end (including dotted versions like 3.86.0)
+    identifier = re.sub(r'-\d+(\.\d+)*$', '', component_name)
+    # Remove common prefixes (KP-, FE-, IN-, etc.)
+    identifier = re.sub(r'^[A-Z]+-', '', identifier)
+    # Remove version suffixes (V2, V1, etc.) - both with and without dash
+    identifier = re.sub(r'-V\d+$', '', identifier)
+    identifier = re.sub(r'V\d+$', '', identifier)
+    # Remove special suffixes like "MinSpinTimePOC", "HolidayDrops-Dev"
+    identifier = re.sub(r'-[A-Za-z]+(-[A-Za-z]+)*$', '', identifier)
+    # Normalize to lowercase
+    identifier = identifier.lower()
+    return identifier
+
+
+def construct_s3_key_from_path_format(
+    path_format: str,
+    version: str,
+    prefix: str = "dev"
+) -> str:
+    """
+    Construct S3 key from path_format by replacing version placeholder and adding prefix.
+
+    Args:
+        path_format: Full path format with {0} or {version} placeholder
+                    (e.g., "/krembo/krembo_components/krembo_core/krembo.{0}.min.js")
+        version: Version string to replace placeholder
+        prefix: Environment prefix (e.g., "dev", "stage", "prd")
+
+    Returns:
+        Full S3 key with prefix (e.g., "dev/krembo/krembo_components/krembo_core/krembo.19.min.js")
+
+    Example:
+        >>> construct_s3_key_from_path_format("/krembo/krembo_components/krembo_core/krembo.{0}.min.js", "19", "dev")
+        'dev/krembo/krembo_components/krembo_core/krembo.19.min.js'
+    """
+    # Replace version placeholder (support both {0} and {version} for backward compatibility)
+    path = path_format.replace('{0}', version).replace('{version}', version)
+
+    # Normalize leading slash
+    path = path.lstrip('/')
+
+    # Strip known prefixes if present (dev/, stage/, prd/, etc.)
+    known_prefixes = ['dev/', 'stage/', 'prd/', 'prod/']
+    for known_prefix in known_prefixes:
+        if path.startswith(known_prefix):
+            path = path[len(known_prefix):]
+            break
+
+    # Add the specified prefix
+    return f"{prefix}/{path}"
+
+
 def copy_component_file(
     component_name: str,
     component_config: Dict[str, str],
@@ -125,7 +198,7 @@ def copy_component_file(
 
     Args:
         component_name: Full component name (e.g., "Component-A-V1-19")
-        component_config: Dictionary containing file_name_pattern and path
+        component_config: Dictionary containing path_format
         bucket_name: S3 bucket name
         s3_client: Boto3 S3 client instance
         source_prefix: Source path prefix (e.g., "dev", "stage", "prd")
@@ -136,28 +209,34 @@ def copy_component_file(
         True if copy was successful (or would be successful in dry-run), False otherwise
     """
     try:
-        file_name_pattern = component_config['file_name_pattern']
-        base_path = component_config['path']
+        if 'path_format' not in component_config:
+            logger.error(
+                f"Missing 'path_format' in component config: {component_config}")
+            return False
+
+        path_format = component_config['path_format']
 
         # Extract version from component name
         version = extract_version(component_name)
         logger.info(
             f"Extracted version '{version}' from component '{component_name}'")
 
-        # Construct file name
-        file_name = construct_file_name(file_name_pattern, version)
+        # Construct S3 keys from path_format
+        source_key = construct_s3_key_from_path_format(
+            path_format, version, source_prefix)
+        destination_key = construct_s3_key_from_path_format(
+            path_format, version, destination_prefix)
+
+        # Extract file name for logging
+        file_name = os.path.basename(source_key)
+        logger.info(f"Using path_format: {path_format}")
         logger.info(f"Constructed file name: {file_name}")
+        logger.info(f"Source key: {source_key}")
+        logger.info(f"Destination key: {destination_key}")
 
-        # Construct paths
-        source_path, destination_path = construct_paths(
-            base_path, source_prefix, destination_prefix)
-        logger.info(f"Source path: {source_path}")
-        logger.info(f"Destination path: {destination_path}")
-
-        # Construct full S3 keys
-        source_key = os.path.join(source_path, file_name).replace('\\', '/')
-        destination_key = os.path.join(
-            destination_path, file_name).replace('\\', '/')
+        # Extract directory paths for logging (remove filename from key)
+        source_path = os.path.dirname(source_key).replace('\\', '/')
+        destination_path = os.path.dirname(destination_key).replace('\\', '/')
 
         # Check if the file exists in the source using list_objects_v2
         # This only requires s3:ListBucket permission, not s3:GetObject
@@ -281,26 +360,43 @@ def copy_component_file(
                 return True
             except ClientError as e:
                 error_code = e.response['Error']['Code']
+                error_message = e.response['Error'].get(
+                    'Message', 'No error message')
+
                 if error_code == '403':
                     logger.error(f"Permission denied (403) when copying file.")
                     logger.error(f"Source: s3://{bucket_name}/{source_key}")
                     logger.error(
                         f"Destination: s3://{bucket_name}/{destination_key}")
+                    logger.error(f"AWS Error Message: {error_message}")
+                    logger.error("")
                     logger.error("This usually means:")
                     logger.error(
-                        "  1. Your AWS credentials don't have s3:GetObject permission for the source")
+                        "  1. Your AWS credentials don't have s3:GetObject permission for the source path")
                     logger.error(
-                        "  2. Your AWS credentials don't have s3:PutObject permission for the destination")
+                        "  2. Your AWS credentials don't have s3:PutObject permission for the destination path")
                     logger.error(
-                        "  3. The bucket policy or object ACL denies access")
+                        "  3. The bucket policy or object ACL denies access for this specific path")
                     logger.error(
                         "  4. Your credentials are invalid or expired")
+                    logger.error("")
                     logger.error(
-                        "Please check your AWS credentials and S3 bucket permissions.")
+                        "Note: Path-specific permissions can cause some files to copy successfully")
+                    logger.error(
+                        "while others fail, even within the same bucket.")
+                    logger.error(
+                        "Please check your AWS credentials and S3 bucket permissions for these specific paths.")
+
+                    # Log additional debug info if available
+                    if logger.level <= logging.DEBUG:
+                        logger.debug(f"Full error response: {e.response}")
                     return False
                 else:
                     logger.error(
-                        f"AWS error ({error_code}) when copying file: {e.response['Error'].get('Message', str(e))}")
+                        f"AWS error ({error_code}) when copying file: {error_message}")
+                    logger.error(f"Source: s3://{bucket_name}/{source_key}")
+                    logger.error(
+                        f"Destination: s3://{bucket_name}/{destination_key}")
                     return False
 
     except KeyError as e:
@@ -336,10 +432,34 @@ def load_component_mappings(json_file_path: str) -> Dict[str, Dict[str, str]]:
         # Convert list to dictionary keyed by component_key
         mapping_dict: Dict[str, Dict[str, str]] = {}
         for mapping in mappings:
-            if 'component_key' not in mapping:
-                raise ValueError(
-                    "Each mapping must have a 'component_key' field")
-            mapping_dict[mapping['component_key']] = mapping
+            if isinstance(mapping, str):
+                # Simple string format (backward compatibility) - skip as it needs component_key
+                logger.warning(
+                    f"Skipping string mapping without component_key: {mapping}")
+                continue
+            elif isinstance(mapping, dict):
+                if 'component_key' not in mapping:
+                    logger.warning(
+                        f"Skipping mapping entry without component_key: {mapping}")
+                    continue
+
+                # Support both path_format and old format (file_name_pattern + path)
+                if 'path_format' in mapping:
+                    mapping_dict[mapping['component_key']] = mapping
+                elif 'file_name_pattern' in mapping and 'path' in mapping:
+                    # Convert old format to new format
+                    path = mapping['path'].rstrip('/')
+                    pattern = mapping['file_name_pattern'].replace(
+                        '{version}', '{0}')
+                    mapping_dict[mapping['component_key']] = {
+                        'component_key': mapping['component_key'],
+                        'path_format': f"/{path}/{pattern}"
+                    }
+                else:
+                    logger.warning(
+                        f"Skipping mapping entry without path_format or file_name_pattern: {mapping}")
+            else:
+                logger.warning(f"Skipping invalid mapping entry: {mapping}")
 
         return mapping_dict
     except FileNotFoundError:
@@ -788,19 +908,16 @@ def main() -> int:
         logger.error(
             "Failed to access S3 bucket. Please check your credentials and permissions.")
         logger.error("Required IAM permissions:")
-        logger.error("  - s3:ListBucket (to verify access)")
-        logger.error("  - s3:GetObject (to read source files)")
-        logger.error("  - s3:PutObject (to write destination files)")
+        logger.error(
+            "  - s3:ListBucket (to verify access and check if files exist)")
+        logger.error(
+            "  - s3:GetObject (required by copy_object to read source files)")
+        logger.error(
+            "  - s3:PutObject (required by copy_object to write destination files)")
         return 1
     else:
         logger.info(
-            "✓ Initial bucket access test passed (s3:ListBucket permission OK)")
-        logger.warning(
-            "Note: Initial test passed, but specific file access may still fail if:")
-        logger.warning(
-            "  - Your credentials don't have s3:GetObject permission for specific paths")
-        logger.warning("  - There are path-specific bucket policies or ACLs")
-        logger.warning("  - Your session token expires during execution")
+            "✓ Initial bucket access test passed")
 
     if args.dry_run:
         logger.info("=" * 80)
@@ -830,6 +947,8 @@ def main() -> int:
     success_count = 0
     failure_count = 0
     not_found_count = 0
+    successful_components = []
+    failed_components = []
 
     for i, component_name in enumerate(component_names, 1):
         logger.info(
@@ -844,6 +963,7 @@ def main() -> int:
             logger.error(f"No mapping found for component '{component_name}'")
             not_found_count += 1
             failure_count += 1
+            failed_components.append(component_name)
             continue
 
         if copy_component_file(component_name, component_config, args.bucket, s3_client,
@@ -851,8 +971,10 @@ def main() -> int:
                                destination_prefix=args.destination_prefix,
                                dry_run=args.dry_run):
             success_count += 1
+            successful_components.append(component_name)
         else:
             failure_count += 1
+            failed_components.append(component_name)
 
     # Summary
     logger.info("\n" + "=" * 80)
@@ -864,6 +986,24 @@ def main() -> int:
     logger.info(f"Total components to process: {len(component_names)}")
     logger.info(f"Successful: {success_count}")
     logger.info(f"Failed: {failure_count}")
+
+    if successful_components:
+        logger.info(
+            f"\n✓ Successfully processed components ({len(successful_components)}):")
+        for comp in successful_components:
+            logger.info(f"  - {comp}")
+
+    if failed_components:
+        logger.info(f"\n✗ Failed components ({len(failed_components)}):")
+        for comp in failed_components:
+            logger.info(f"  - {comp}")
+        logger.info(
+            "\nNote: If some components succeeded and others failed with permission errors,")
+        logger.info(
+            "this usually indicates path-specific IAM permissions or bucket policies.")
+        logger.info(
+            "Check the error messages above for the specific paths that failed.")
+
     if not_found_count > 0:
         logger.info(f"  - No mapping found: {not_found_count}")
     if args.dry_run:
