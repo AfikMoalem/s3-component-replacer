@@ -53,11 +53,12 @@ pip install -r requirements.txt
 
 # Configure AWS SSO (recommended)
 aws configure sso --profile your-profile-name
-aws sso login --profile your-profile-name
+aws sso login --profile your-profile-name       # aws sso login --profile xyz
 
-# Run script
+# Run script - dry run
 python src/s3_component_replacer.py --profile your-profile-name --dry-run
 ```
+
 
 ## 4. Usage Examples
 
@@ -108,27 +109,32 @@ python src/s3_component_replacer.py \
 
 ### `config/components_mapping.json`
 
-Defines component type configurations:
+Defines component type configurations using `component_key` and `path_format`:
 
 ```json
 [
   {
     "component_key": "KP-SlotMachine-V2",
-    "file_name_pattern": "slotmachine.{version}.min.js",
-    "path": "krembo/krembo_componentsV2/game_type/slotmachine/"
+    "path_format": "/krembo/krembo_componentsV2/game_type/slotmachine/slotmachine.{0}.min.js"
   },
   {
-    "component_key": "Component-A-V1",
-    "file_name_pattern": "component-a.{version}.min.js",
-    "path": "components/component-a/"
+    "component_key": "KP-BookOfPiggyBank",
+    "path_format": "/krembo/krembo_components/game_class/BookOfPiggyBank/bookofpiggybank.{0}.min.js"
+  },
+  {
+    "component_key": "FE-KremboServiceWrapper",
+    "path_format": "/krembo/external_components/scripts/service_wrapper/service_wrapper.{0}.js"
   }
 ]
 ```
 
 **Fields:**
-- `component_key`: Base name without version (for matching)
-- `file_name_pattern`: Template with `{version}` placeholder
-- `path`: Base S3 path (without prefix)
+- `component_key`: Base name without version (for matching component names)
+- `path_format`: Full S3 path format with `{0}` placeholder for version number
+
+**Matching Logic:**
+- The tool matches component names by checking if they start with a `component_key`
+- Longer (more specific) matches are preferred (e.g., `KP-BookOfPiggyBank-V2` matches before `KP-BookOfPiggyBank`)
 
 ### `config/components_to_replace.json`
 
@@ -137,8 +143,8 @@ Lists components to process (with versions):
 ```json
 [
   "KP-SlotMachine-V2-22",
-  "Component-A-V1-19",
-  "Component-B-227"
+  "KP-BookOfPiggyBank-36",
+  "FE-KremboServiceWrapper-260"
 ]
 ```
 
@@ -146,9 +152,10 @@ Lists components to process (with versions):
 - Component: `KP-SlotMachine-V2-22`
 - Extracts version: `22`
 - Matches: `component_key` = `"KP-SlotMachine-V2"`
-- File name: `slotmachine.22.min.js`
-- Source: `dev/krembo/.../slotmachine.22.min.js`
-- Destination: `stage/krembo/.../slotmachine.22.min.js`
+- Path format: `/krembo/krembo_componentsV2/game_type/slotmachine/slotmachine.{0}.min.js`
+- Replaces `{0}` with version: `slotmachine.22.min.js`
+- Source: `dev/krembo/krembo_componentsV2/game_type/slotmachine/slotmachine.22.min.js`
+- Destination: `stage/krembo/krembo_componentsV2/game_type/slotmachine/slotmachine.22.min.js`
 
 ## 6. Requirements
 

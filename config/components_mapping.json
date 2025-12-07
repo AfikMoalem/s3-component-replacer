@@ -1,7 +1,278 @@
 [
     {
+        "component_key": "FE-C2ServiceWrapper",
+        "path_format": "/external_components/scripts/service_wrapper/service_wrapper.{0}.js"
+    },
+    {
+        "component_key": "FE-C2LoadingWrapper",
+        "path_format": "/external_components/scripts/loading_wrapper/loading_wrapper.{0}.js"
+    },
+    {
+        "component_key": "FE-AutoBetMenu",
+        "path_format": "/shared_resources/external_components/scripts/auto_bet_menu/auto_bet_menu.{0}.js"
+    },
+    {
+        "component_key": "FE-FreeRounds",
+        "path_format": "/shared_resources/external_components/scripts/free_rounds_screen/free_rounds_screen.{0}.js"
+    },
+    {
+        "component_key": "FE-PromoTool",
+        "path_format": "/shared_resources/external_components/scripts/promo_tool/promo_tool.{0}.js"
+    },
+    {
+        "component_key": "FE-BetSlip",
+        "path_format": "/shared_resources/external_components/scripts/bet_slip/bet_slip.{0}.js"
+    },
+    {
+        "component_key": "FE-TicketHistory",
+        "path_format": "/shared_resources/external_components/scripts/ticket_history/ticket_history.{0}.js"
+    },
+    {
+        "component_key": "FE-PaytableLoader",
+        "path_format": "/shared_resources/external_components/scripts/paytable_loader/paytable_loader.{0}.js"
+    },
+    {
+        "component_key": "FE-PaytableHelpPage",
+        "path_format": "/shared_resources/external_components/scripts/paytable_helppage/paytable_helppage.{0}.js"
+    },
+    {
+        "component_key": "FE-PaytableHelpage",
+        "path_format": "/shared_resources/external_components/scripts/paytable_helppage/paytable_helppage.{0}.js"
+    },
+    {
+        "component_key": "FE-TicketGenerator",
+        "path_format": "/shared_resources/external_components/scripts/external_ticket_generator/external_ticket_generator.{0}.js"
+    },
+    {
+        "component_key": "FE-MessageScreen",
+        "path_format": "/shared_resources/external_components/scripts/message_screen/message_screen.{0}.js"
+    },
+    {
+        "component_key": "FE-InterService",
+        "path_format": "/shared_resources/external_components/scripts/inter_service/inter_service.{0}.js"
+    },
+    {
+        "component_key": "FE-KremboServiceWrapper",
+        "path_format": "/krembo/external_components/scripts/service_wrapper/service_wrapper.{0}.js"
+    },
+    {
+        "component_key": "FE-KremboGameLoadingScreen",
+        "path_format": "/krembo/external_components/scripts/game_loading_screen/game_loading_screen.{0}.js"
+    },
+    {
+        "component_key": "FE-GameLoadingScreen",
+        "path_format": "/krembo/external_components/scripts/game_loading_screen/game_loading_screen.{0}.js"
+    },
+    {
+        "component_key": "FE-KremboGameRibbon",
+        "path_format": "/krembo/external_components/scripts/game_ribbon/game_ribbon.{0}.js"
+    },
+    {
+        "component_key": "FE-KremboFeatureBox",
+        "path_format": "/krembo/external_components/scripts/feature_box/feature_box.{0}.js"
+    },
+    {
+        "component_key": "FE-FeatureBox",
+        "path_format": "/krembo/external_components/scripts/feature_box/feature_box.{0}.js"
+    },
+    {
+        "component_key": "FE-KremboRequestLoadingScreen",
+        "path_format": "/krembo/external_components/scripts/request_loading_screen/request_loading_screen.{0}.js"
+    },
+    {
+        "component_key": "FE-RequestLoadingScreen",
+        "path_format": "/krembo/external_components/scripts/request_loading_screen/request_loading_screen.{0}.js"
+    },
+    {
+        "component_key": "FE-KremboLoadingWrapper",
+        "path_format": "/krembo/external_components/scripts/loading_wrapper/loading_wrapper.{0}.js"
+    },
+    {
+        "component_key": "FE-KremboBuyFeature",
+        "path_format": "/krembo/external_components/scripts/buy_feature/buy_feature.{0}.js"
+    },
+    {
+        "component_key": "FE-BuyFeature",
+        "path_format": "/krembo/external_components/scripts/buy_feature/buy_feature.{0}.js"
+    },
+    {
+        "component_key": "FE-KremboMessageScreen",
+        "path_format": "/shared_resources/external_components/scripts/message_screen/message_screen.{0}.js"
+    },
+    {
+        "component_key": "KP-KremboCore",
+        "path_format": "/krembo/krembo_components/krembo_core/krembo.{0}.min.js"
+    },
+    {
+        "component_key": "KP-Krembo",
+        "path_format": "/krembo/krembo_components/krembo_core/krembo.{0}.min.js"
+    },
+    {
+        "component_key": "KP-Krembo-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_core/krembo.{0}.min.js"
+    },
+    {
+        "component_key": "KP-KremboV2",
+        "path_format": "/krembo/krembo_componentsV2/game_core/krembo.{0}.min.js"
+    },
+    {
+        "component_key": "KP-Tower",
+        "path_format": "/krembo/krembo_components/game_type/Tower/tower.{0}.min.js"
+    },
+    {
+        "component_key": "KP-Tower-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_type/tower/tower.{0}.min.js"
+    },
+    {
+        "component_key": "KP-OneReel",
+        "path_format": "/krembo/krembo_components/game_class/OneReel/onereel.{0}.min.js"
+    },
+    {
+        "component_key": "KP-OneReel-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/onereel/onereel.{0}.min.js"
+    },
+    {
+        "component_key": "KP-SlotMachine",
+        "path_format": "/krembo/krembo_components/game_type/SlotMachine/slotmachine.{0}.min.js"
+    },
+    {
+        "component_key": "KP-Slotmachine",
+        "path_format": "/krembo/krembo_components/game_type/SlotMachine/slotmachine.{0}.min.js"
+    },
+    {
         "component_key": "KP-SlotMachine-V2",
-        "file_name_pattern": "slotmachine.{version}.min.js",
-        "path": "krembo/krembo_componentsV2/game_type/slotmachine/"
+        "path_format": "/krembo/krembo_componentsV2/game_type/slotmachine/slotmachine.{0}.min.js"
+    },
+    {
+        "component_key": "KP-Slotmachine-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_type/slotmachine/slotmachine.{0}.min.js"
+    },
+    {
+        "component_key": "KP-SlotMachineV2",
+        "path_format": "/krembo/krembo_componentsV2/game_type/slotmachine/slotmachine.{0}.min.js"
+    },
+    {
+        "component_key": "KP-FruitsCollection",
+        "path_format": "/krembo/krembo_components/game_class/FruitsCollection-10E/fruitscollection-10e.{0}.min.js"
+    },
+    {
+        "component_key": "KP-FruitsCollection-10E-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/fruitscollection-10e/fruitscollection-10e.{0}.min.js"
+    },
+    {
+        "component_key": "KP-FruitsCollection-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/fruitscollection-10e/fruitscollection-10e.{0}.min.js"
+    },
+    {
+        "component_key": "KP-BookOfPiggyBank",
+        "path_format": "/krembo/krembo_components/game_class/BookOfPiggyBank/bookofpiggybank.{0}.min.js"
+    },
+    {
+        "component_key": "KP-BookOfPiggyBank-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/bookofpiggybank/bookofpiggybank.{0}.min.js"
+    },
+    {
+        "component_key": "KP-BookOfPiggyBankV2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/bookofpiggybank/bookofpiggybank.{0}.min.js"
+    },
+    {
+        "component_key": "KP-StoryOfGaia",
+        "path_format": "/krembo/krembo_components/game_class/StoryOfGaia/storyofgaiaclass.{0}.min.js"
+    },
+    {
+        "component_key": "KP-StoryOfGaia-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/storyofgaia/storyofgaia.{0}.min.js"
+    },
+    {
+        "component_key": "KP-StoryOfGaiaV2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/storyofgaia/storyofgaia.{0}.min.js"
+    },
+    {
+        "component_key": "KP-BookOfRebirth",
+        "path_format": "/krembo/krembo_components/game_class/BookOfRebirth/bookofrebirthclass.{0}.min.js"
+    },
+    {
+        "component_key": "KP-BookOfRebirth-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/bookofrebirth/bookofrebirth.{0}.min.js"
+    },
+    {
+        "component_key": "KP-BookOfRebirthV2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/bookofrebirth/bookofrebirth.{0}.min.js"
+    },
+    {
+        "component_key": "KP-Retro777",
+        "path_format": "/krembo/krembo_components/game_class/Retro777/retro777class.{0}.min.js"
+    },
+    {
+        "component_key": "KP-Retro777-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/retro777/retro777.{0}.min.js"
+    },
+    {
+        "component_key": "KP-WolfFang",
+        "path_format": "/krembo/krembo_components/game_class/WolfFang/wolffangclass.{0}.min.js"
+    },
+    {
+        "component_key": "KP-WolfFang-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/wolffang/wolffang.{0}.min.js"
+    },
+    {
+        "component_key": "KP-DragonsCharms",
+        "path_format": "/krembo/krembo_components/game_class/DragonsCharms/dragonscharmsclass.{0}.min.js"
+    },
+    {
+        "component_key": "KP-DragonsCharms-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/dragonscharms/dragonscharms.{0}.min.js"
+    },
+    {
+        "component_key": "KP-DragonsCharmsV2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/dragonscharms/dragonscharms.{0}.min.js"
+    },
+    {
+        "component_key": "KP-TroutsTreasure",
+        "path_format": "/krembo/krembo_components/game_class/TroutsTreasure/troutstreasureclass.{0}.min.js"
+    },
+    {
+        "component_key": "KP-TroutsTreasure-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/troutstreasure/troutstreasure.{0}.min.js"
+    },
+    {
+        "component_key": "KP-ClassicFruits-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/classicfruits/classicfruits.{0}.min.js"
+    },
+    {
+        "component_key": "KP-HoldNHitV2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/holdnhit/holdnhit.{0}.min.js"
+    },
+    {
+        "component_key": "KP-SnatchTheGold-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/retrosnatchthegold/retrosnatchthegold.{0}.min.js"
+    },
+    {
+        "component_key": "KP-PowerHoldNHit-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/powerholdnhit/powerholdnhit.{0}.min.js"
+    },
+    {
+        "component_key": "KP-HoldNHit3x3-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/holdnhit3x3/holdnhit3x3.{0}.min.js"
+    },
+    {
+        "component_key": "KP-MajesticKing",
+        "path_format": "/krembo/krembo_componentsV2/game_class/majesticking/majesticking.{0}.min.js"
+    },
+    {
+        "component_key": "KP-MajesticKing-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/majesticking/majesticking.{0}.min.js"
+    },
+    {
+        "component_key": "KP-KitsunesScrollsV2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/kitsunesscrolls/kitsunesscrolls.{0}.min.js"
+    },
+    {
+        "component_key": "KP-Phaser",
+        "path_format": "/krembo/external_components/scripts/lib/phaser.{0}.js"
+    },
+    {
+        "component_key": "KP-PhaserEngine",
+        "path_format": "/krembo/external_components/scripts/lib/phaserengine.{0}.js"
     }
 ]
