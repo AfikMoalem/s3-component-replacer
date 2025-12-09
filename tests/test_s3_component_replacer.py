@@ -5,7 +5,7 @@ Pytest tests for s3_component_replacer.py
 import json
 import os
 import tempfile
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from botocore.exceptions import ClientError
@@ -58,17 +58,24 @@ class TestConstructFileName:
 
     def test_construct_file_name_basic(self):
         """Test basic file name construction"""
-        assert construct_file_name(
-            "krembo.{version}.min.js", "19") == "krembo.19.min.js"
+        assert (
+            construct_file_name("krembo.{version}.min.js", "19") == "krembo.19.min.js"
+        )
 
     def test_construct_file_name_different_patterns(self):
         """Test various file name patterns"""
-        assert construct_file_name(
-            "component-b.{version}.min.js", "227") == "component-b.227.min.js"
-        assert construct_file_name(
-            "component-f.{version}.min.js", "202") == "component-f.202.min.js"
-        assert construct_file_name(
-            "component-j.{version}.min.js", "2025") == "component-j.2025.min.js"
+        assert (
+            construct_file_name("component-b.{version}.min.js", "227")
+            == "component-b.227.min.js"
+        )
+        assert (
+            construct_file_name("component-f.{version}.min.js", "202")
+            == "component-f.202.min.js"
+        )
+        assert (
+            construct_file_name("component-j.{version}.min.js", "2025")
+            == "component-j.2025.min.js"
+        )
 
     def test_construct_file_name_multiple_placeholders(self):
         """Test file name with multiple version placeholders"""
@@ -122,8 +129,14 @@ class TestFindComponentMapping:
     def test_find_component_mapping_exact_match(self):
         """Test finding exact component key match"""
         mappings = {
-            "Component-A-V1": {"file_name_pattern": "component-a.{version}.min.js", "path": "components/component-a/"},
-            "Component-B": {"file_name_pattern": "component-b.{version}.min.js", "path": "components/component-b/"}
+            "Component-A-V1": {
+                "file_name_pattern": "component-a.{version}.min.js",
+                "path": "components/component-a/",
+            },
+            "Component-B": {
+                "file_name_pattern": "component-b.{version}.min.js",
+                "path": "components/component-b/",
+            },
         }
         result = find_component_mapping("Component-A-V1-19", mappings)
         assert result == mappings["Component-A-V1"]
@@ -131,8 +144,14 @@ class TestFindComponentMapping:
     def test_find_component_mapping_best_match(self):
         """Test that longest (most specific) match is returned"""
         mappings = {
-            "Component-A": {"file_name_pattern": "component-a.{version}.min.js", "path": "components/component-a/"},
-            "Component-A-V1": {"file_name_pattern": "component-a-v1.{version}.min.js", "path": "components/component-a-v1/"}
+            "Component-A": {
+                "file_name_pattern": "component-a.{version}.min.js",
+                "path": "components/component-a/",
+            },
+            "Component-A-V1": {
+                "file_name_pattern": "component-a-v1.{version}.min.js",
+                "path": "components/component-a-v1/",
+            },
         }
         result = find_component_mapping("Component-A-V1-19", mappings)
         # Should return the longer, more specific match
@@ -141,7 +160,10 @@ class TestFindComponentMapping:
     def test_find_component_mapping_no_match(self):
         """Test that None is returned when no match found"""
         mappings = {
-            "Component-A-V1": {"file_name_pattern": "component-a.{version}.min.js", "path": "components/component-a/"}
+            "Component-A-V1": {
+                "file_name_pattern": "component-a.{version}.min.js",
+                "path": "components/component-a/",
+            }
         }
         result = find_component_mapping("Component-Unknown-123", mappings)
         assert result is None
@@ -149,9 +171,18 @@ class TestFindComponentMapping:
     def test_find_component_mapping_multiple_matches(self):
         """Test best match when multiple keys could match"""
         mappings = {
-            "Component": {"file_name_pattern": "component.{version}.min.js", "path": "components/"},
-            "Component-B": {"file_name_pattern": "component-b.{version}.min.js", "path": "components/component-b/"},
-            "Component-B-Wrapper": {"file_name_pattern": "component-b-wrapper.{version}.min.js", "path": "components/component-b-wrapper/"}
+            "Component": {
+                "file_name_pattern": "component.{version}.min.js",
+                "path": "components/",
+            },
+            "Component-B": {
+                "file_name_pattern": "component-b.{version}.min.js",
+                "path": "components/component-b/",
+            },
+            "Component-B-Wrapper": {
+                "file_name_pattern": "component-b-wrapper.{version}.min.js",
+                "path": "components/component-b-wrapper/",
+            },
         }
         result = find_component_mapping("Component-B-Wrapper-227", mappings)
         # Should return the longest match
@@ -163,19 +194,22 @@ class TestLoadComponentMappings:
 
     def test_load_component_mappings_valid_file(self):
         """Test loading valid mappings file"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            json.dump([
-                {
-                    "component_key": "Component-A-V1",
-                    "file_name_pattern": "component-a.{version}.min.js",
-                    "path": "components/component-a/"
-                },
-                {
-                    "component_key": "Component-B",
-                    "file_name_pattern": "component-b.{version}.min.js",
-                    "path": "components/component-b/"
-                }
-            ], f)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(
+                [
+                    {
+                        "component_key": "Component-A-V1",
+                        "file_name_pattern": "component-a.{version}.min.js",
+                        "path": "components/component-a/",
+                    },
+                    {
+                        "component_key": "Component-B",
+                        "file_name_pattern": "component-b.{version}.min.js",
+                        "path": "components/component-b/",
+                    },
+                ],
+                f,
+            )
             temp_path = f.name
 
         try:
@@ -183,7 +217,10 @@ class TestLoadComponentMappings:
             assert len(result) == 2
             assert "Component-A-V1" in result
             assert "Component-B" in result
-            assert result["Component-A-V1"]["file_name_pattern"] == "component-a.{version}.min.js"
+            assert (
+                result["Component-A-V1"]["file_name_pattern"]
+                == "component-a.{version}.min.js"
+            )
         finally:
             os.unlink(temp_path)
 
@@ -194,7 +231,7 @@ class TestLoadComponentMappings:
 
     def test_load_component_mappings_invalid_json(self):
         """Test loading invalid JSON returns empty dict"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write("invalid json content {")
             temp_path = f.name
 
@@ -206,9 +243,10 @@ class TestLoadComponentMappings:
 
     def test_load_component_mappings_missing_component_key(self):
         """Test that missing component_key raises ValueError"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(
-                [{"file_name_pattern": "test.{version}.min.js", "path": "test/"}], f)
+                [{"file_name_pattern": "test.{version}.min.js", "path": "test/"}], f
+            )
             temp_path = f.name
 
         try:
@@ -223,12 +261,8 @@ class TestLoadComponentNames:
 
     def test_load_component_names_valid_file(self):
         """Test loading valid component names file"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            json.dump([
-                "Component-A-V1-19",
-                "Component-B-227",
-                "Component-F-202"
-            ], f)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(["Component-A-V1-19", "Component-B-227", "Component-F-202"], f)
             temp_path = f.name
 
         try:
@@ -247,7 +281,7 @@ class TestLoadComponentNames:
 
     def test_load_component_names_invalid_json(self):
         """Test loading invalid JSON returns empty list"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write("invalid json content [")
             temp_path = f.name
 
@@ -271,7 +305,7 @@ class TestCopyComponentFile:
         """Sample component configuration"""
         return {
             "file_name_pattern": "component-a.{version}.min.js",
-            "path": "components/component-a/"
+            "path": "components/component-a/",
         }
 
     def test_copy_component_file_success(self, mock_s3_client, component_config):
@@ -284,7 +318,7 @@ class TestCopyComponentFile:
             component_config,
             "test-bucket",
             mock_s3_client,
-            dry_run=False
+            dry_run=False,
         )
 
         assert result is True
@@ -301,58 +335,66 @@ class TestCopyComponentFile:
             component_config,
             "test-bucket",
             mock_s3_client,
-            dry_run=True
+            dry_run=True,
         )
 
         assert result is True
         # Verify copy_object was NOT called in dry run
         mock_s3_client.copy_object.assert_not_called()
 
-    def test_copy_component_file_source_not_found(self, mock_s3_client, component_config):
+    def test_copy_component_file_source_not_found(
+        self, mock_s3_client, component_config
+    ):
         """Test handling when source file doesn't exist"""
         # Mock 404 error for source file
-        error_response = {'Error': {'Code': '404', 'Message': 'Not Found'}}
+        error_response = {"Error": {"Code": "404", "Message": "Not Found"}}
         mock_s3_client.head_object.side_effect = ClientError(
-            error_response, 'HeadObject')
+            error_response, "HeadObject"
+        )
 
         result = copy_component_file(
             "Component-A-V1-19",
             component_config,
             "test-bucket",
             mock_s3_client,
-            dry_run=False
+            dry_run=False,
         )
 
         assert result is False
         mock_s3_client.copy_object.assert_not_called()
 
-    def test_copy_component_file_permission_denied(self, mock_s3_client, component_config):
+    def test_copy_component_file_permission_denied(
+        self, mock_s3_client, component_config
+    ):
         """Test handling permission denied error"""
         # Mock 403 error
-        error_response = {'Error': {'Code': '403', 'Message': 'Forbidden'}}
+        error_response = {"Error": {"Code": "403", "Message": "Forbidden"}}
         mock_s3_client.head_object.side_effect = ClientError(
-            error_response, 'HeadObject')
+            error_response, "HeadObject"
+        )
 
         result = copy_component_file(
             "Component-A-V1-19",
             component_config,
             "test-bucket",
             mock_s3_client,
-            dry_run=False
+            dry_run=False,
         )
 
         assert result is False
 
-    def test_copy_component_file_destination_not_found(self, mock_s3_client, component_config):
+    def test_copy_component_file_destination_not_found(
+        self, mock_s3_client, component_config
+    ):
         """Test handling when destination file doesn't exist (should still copy)"""
+
         # First call (source) succeeds, second call (destination) returns 404
         def side_effect(*args, **kwargs):
             if mock_s3_client.head_object.call_count == 1:
                 return {}  # Source exists
             else:
-                error_response = {
-                    'Error': {'Code': '404', 'Message': 'Not Found'}}
-                raise ClientError(error_response, 'HeadObject')
+                error_response = {"Error": {"Code": "404", "Message": "Not Found"}}
+                raise ClientError(error_response, "HeadObject")
 
         mock_s3_client.head_object.side_effect = side_effect
 
@@ -361,7 +403,7 @@ class TestCopyComponentFile:
             component_config,
             "test-bucket",
             mock_s3_client,
-            dry_run=False
+            dry_run=False,
         )
 
         assert result is True
@@ -377,19 +419,21 @@ class TestCopyComponentFile:
             incomplete_config,
             "test-bucket",
             mock_s3_client,
-            dry_run=False
+            dry_run=False,
         )
 
         assert result is False
 
-    def test_copy_component_file_invalid_version(self, mock_s3_client, component_config):
+    def test_copy_component_file_invalid_version(
+        self, mock_s3_client, component_config
+    ):
         """Test handling component name with no version"""
         result = copy_component_file(
             "Component-A-V1",  # No version number
             component_config,
             "test-bucket",
             mock_s3_client,
-            dry_run=False
+            dry_run=False,
         )
 
         assert result is False

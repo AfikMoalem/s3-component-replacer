@@ -19,8 +19,8 @@ from botocore.exceptions import ClientError
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
 
@@ -47,12 +47,11 @@ def extract_version(component_name: str) -> str:
         >>> extract_version("Component-F-202")
         '202'
     """
-    numbers = re.findall(r'\d+', component_name)
+    numbers = re.findall(r"\d+", component_name)
     if numbers:
         return numbers[-1]
     else:
-        raise ValueError(
-            f"No version number found in component name: {component_name}")
+        raise ValueError(f"No version number found in component name: {component_name}")
 
 
 def construct_file_name(pattern: str, version: str) -> str:
@@ -70,10 +69,12 @@ def construct_file_name(pattern: str, version: str) -> str:
         >>> construct_file_name("krembo.{version}.min.js", "19")
         'krembo.19.min.js'
     """
-    return pattern.replace('{version}', version)
+    return pattern.replace("{version}", version)
 
 
-def construct_paths(base_path: str, source_prefix: str = "dev", destination_prefix: str = "stage") -> Tuple[str, str]:
+def construct_paths(
+    base_path: str, source_prefix: str = "dev", destination_prefix: str = "stage"
+) -> Tuple[str, str]:
     """
     Construct source_path and destination_path from base path with configurable prefixes.
 
@@ -92,18 +93,18 @@ def construct_paths(base_path: str, source_prefix: str = "dev", destination_pref
         ('stage/krembo/krembo_componentsV2/game_core/', 'prd/krembo/krembo_componentsV2/game_core/')
     """
     # Normalize leading slash
-    base_path = base_path.lstrip('/')
+    base_path = base_path.lstrip("/")
 
     # Strip known prefixes (dev/, stage/, prd/, etc.)
-    known_prefixes = ['dev/', 'stage/', 'prd/', 'prod/']
+    known_prefixes = ["dev/", "stage/", "prd/", "prod/"]
     for prefix in known_prefixes:
         if base_path.startswith(prefix):
-            base_path = base_path[len(prefix):]
+            base_path = base_path[len(prefix) :]
             break
 
     # Ensure trailing slash
-    if not base_path.endswith('/'):
-        base_path += '/'
+    if not base_path.endswith("/"):
+        base_path += "/"
 
     source_path = f"{source_prefix}/{base_path}"
     destination_path = f"{destination_prefix}/{base_path}"
@@ -133,23 +134,21 @@ def extract_component_identifier(component_name: str) -> str:
         'slotmachine'
     """
     # Remove version numbers at the end (including dotted versions like 3.86.0)
-    identifier = re.sub(r'-\d+(\.\d+)*$', '', component_name)
+    identifier = re.sub(r"-\d+(\.\d+)*$", "", component_name)
     # Remove common prefixes (KP-, FE-, IN-, etc.)
-    identifier = re.sub(r'^[A-Z]+-', '', identifier)
+    identifier = re.sub(r"^[A-Z]+-", "", identifier)
     # Remove version suffixes (V2, V1, etc.) - both with and without dash
-    identifier = re.sub(r'-V\d+$', '', identifier)
-    identifier = re.sub(r'V\d+$', '', identifier)
+    identifier = re.sub(r"-V\d+$", "", identifier)
+    identifier = re.sub(r"V\d+$", "", identifier)
     # Remove special suffixes like "MinSpinTimePOC", "HolidayDrops-Dev"
-    identifier = re.sub(r'-[A-Za-z]+(-[A-Za-z]+)*$', '', identifier)
+    identifier = re.sub(r"-[A-Za-z]+(-[A-Za-z]+)*$", "", identifier)
     # Normalize to lowercase
     identifier = identifier.lower()
     return identifier
 
 
 def construct_s3_key_from_path_format(
-    path_format: str,
-    version: str,
-    prefix: str = "dev"
+    path_format: str, version: str, prefix: str = "dev"
 ) -> str:
     """
     Construct S3 key from path_format by replacing version placeholder and adding prefix.
@@ -168,16 +167,16 @@ def construct_s3_key_from_path_format(
         'dev/krembo/krembo_components/krembo_core/krembo.19.min.js'
     """
     # Replace version placeholder (support both {0} and {version} for backward compatibility)
-    path = path_format.replace('{0}', version).replace('{version}', version)
+    path = path_format.replace("{0}", version).replace("{version}", version)
 
     # Normalize leading slash
-    path = path.lstrip('/')
+    path = path.lstrip("/")
 
     # Strip known prefixes if present (dev/, stage/, prd/, etc.)
-    known_prefixes = ['dev/', 'stage/', 'prd/', 'prod/']
+    known_prefixes = ["dev/", "stage/", "prd/", "prod/"]
     for known_prefix in known_prefixes:
         if path.startswith(known_prefix):
-            path = path[len(known_prefix):]
+            path = path[len(known_prefix) :]
             break
 
     # Add the specified prefix
@@ -191,7 +190,7 @@ def copy_component_file(
     s3_client,
     source_prefix: str = "dev",
     destination_prefix: str = "stage",
-    dry_run: bool = False
+    dry_run: bool = False,
 ) -> bool:
     """
     Copy component file from source path to destination path in S3.
@@ -209,23 +208,25 @@ def copy_component_file(
         True if copy was successful (or would be successful in dry-run), False otherwise
     """
     try:
-        if 'path_format' not in component_config:
+        if "path_format" not in component_config:
             logger.error(
-                f"Missing 'path_format' in component config: {component_config}")
+                f"Missing 'path_format' in component config: {component_config}"
+            )
             return False
 
-        path_format = component_config['path_format']
+        path_format = component_config["path_format"]
 
         # Extract version from component name
         version = extract_version(component_name)
-        logger.info(
-            f"Extracted version '{version}' from component '{component_name}'")
+        logger.info(f"Extracted version '{version}' from component '{component_name}'")
 
         # Construct S3 keys from path_format
         source_key = construct_s3_key_from_path_format(
-            path_format, version, source_prefix)
+            path_format, version, source_prefix
+        )
         destination_key = construct_s3_key_from_path_format(
-            path_format, version, destination_prefix)
+            path_format, version, destination_prefix
+        )
 
         # Extract file name for logging
         file_name = os.path.basename(source_key)
@@ -235,63 +236,63 @@ def copy_component_file(
         logger.info(f"Destination key: {destination_key}")
 
         # Extract directory paths for logging (remove filename from key)
-        source_path = os.path.dirname(source_key).replace('\\', '/')
-        destination_path = os.path.dirname(destination_key).replace('\\', '/')
+        source_path = os.path.dirname(source_key).replace("\\", "/")
+        destination_path = os.path.dirname(destination_key).replace("\\", "/")
 
         # Check if the file exists in the source using list_objects_v2
         # This only requires s3:ListBucket permission, not s3:GetObject
-        logger.debug(
-            f"Checking if file exists: s3://{bucket_name}/{source_key}")
+        logger.debug(f"Checking if file exists: s3://{bucket_name}/{source_key}")
         source_exists = False
         try:
             # Use list_objects_v2 to check if the file exists (only needs ListBucket permission)
             response = s3_client.list_objects_v2(
-                Bucket=bucket_name,
-                Prefix=source_key,
-                MaxKeys=1
+                Bucket=bucket_name, Prefix=source_key, MaxKeys=1
             )
             # Check if we found an exact match (not just a prefix match)
-            if 'Contents' in response and len(response['Contents']) > 0:
-                for obj in response['Contents']:
-                    if obj['Key'] == source_key:
+            if "Contents" in response and len(response["Contents"]) > 0:
+                for obj in response["Contents"]:
+                    if obj["Key"] == source_key:
                         source_exists = True
                         logger.info(f"File {file_name} found in {source_path}")
                         if logger.level <= logging.DEBUG:
                             logger.debug(
-                                f"File size: {obj.get('Size', 'unknown')} bytes")
+                                f"File size: {obj.get('Size', 'unknown')} bytes"
+                            )
                             logger.debug(
-                                f"Last modified: {obj.get('LastModified', 'unknown')}")
+                                f"Last modified: {obj.get('LastModified', 'unknown')}"
+                            )
                         break
         except ClientError as e:
-            error_code = e.response['Error']['Code']
-            if error_code == '403':
-                error_message = e.response['Error'].get(
-                    'Message', 'No error message')
-                logger.error(
-                    f"Permission denied (403) when checking source file.")
+            error_code = e.response["Error"]["Code"]
+            if error_code == "403":
+                error_message = e.response["Error"].get("Message", "No error message")
+                logger.error("Permission denied (403) when checking source file.")
                 logger.error(f"Path: s3://{bucket_name}/{source_key}")
                 logger.error(f"AWS Error Message: {error_message}")
                 logger.error("This usually means:")
                 logger.error(
-                    "  1. Your AWS credentials don't have s3:ListBucket permission for this path")
-                logger.error(
-                    "  2. The bucket policy denies access")
+                    "  1. Your AWS credentials don't have s3:ListBucket permission for this path"
+                )
+                logger.error("  2. The bucket policy denies access")
                 logger.error("  3. Your credentials are invalid or expired")
                 logger.error("  4. The session token may have expired")
                 logger.error(
-                    "Please check your AWS credentials and S3 bucket permissions.")
+                    "Please check your AWS credentials and S3 bucket permissions."
+                )
                 # Log additional debug info if available
                 if logger.level <= logging.DEBUG:
                     logger.debug(f"Full error response: {e.response}")
                 return False
             else:
                 logger.error(
-                    f"AWS error ({error_code}) when checking source file: {e.response['Error'].get('Message', str(e))}")
+                    f"AWS error ({error_code}) when checking source file: {e.response['Error'].get('Message', str(e))}"
+                )
                 return False
 
         if not source_exists:
             logger.error(
-                f"File {file_name} does not exist in {source_path}. Skipping...")
+                f"File {file_name} does not exist in {source_path}. Skipping..."
+            )
             return False
 
         # Check if the file exists in the destination using list_objects_v2
@@ -299,93 +300,102 @@ def copy_component_file(
         destination_exists = False
         try:
             response = s3_client.list_objects_v2(
-                Bucket=bucket_name,
-                Prefix=destination_key,
-                MaxKeys=1
+                Bucket=bucket_name, Prefix=destination_key, MaxKeys=1
             )
             # Check if we found an exact match
-            if 'Contents' in response and len(response['Contents']) > 0:
-                for obj in response['Contents']:
-                    if obj['Key'] == destination_key:
+            if "Contents" in response and len(response["Contents"]) > 0:
+                for obj in response["Contents"]:
+                    if obj["Key"] == destination_key:
                         destination_exists = True
                         if dry_run:
                             logger.info(
-                                f"[DRY RUN] File {file_name} exists in {destination_path}. Would replace it...")
+                                f"[DRY RUN] File {file_name} exists in {destination_path}. Would replace it..."
+                            )
                         else:
                             logger.info(
-                                f"File {file_name} exists in {destination_path}. Replacing it...")
+                                f"File {file_name} exists in {destination_path}. Replacing it..."
+                            )
                         break
         except ClientError as e:
-            error_code = e.response['Error']['Code']
-            if error_code == '403':
+            error_code = e.response["Error"]["Code"]
+            if error_code == "403":
                 logger.warning(
-                    f"Permission denied (403) when checking destination file.")
+                    "Permission denied (403) when checking destination file."
+                )
                 logger.warning(f"Path: s3://{bucket_name}/{destination_key}")
                 logger.warning("Will attempt to copy anyway...")
             else:
                 logger.warning(
-                    f"AWS error ({error_code}) when checking destination file: {e.response['Error'].get('Message', str(e))}")
+                    f"AWS error ({error_code}) when checking destination file: {e.response['Error'].get('Message', str(e))}"
+                )
                 logger.warning("Will attempt to copy anyway...")
 
         if not destination_exists:
             if dry_run:
                 logger.info(
-                    f"[DRY RUN] File {file_name} does not exist in {destination_path}. Would upload it...")
+                    f"[DRY RUN] File {file_name} does not exist in {destination_path}. Would upload it..."
+                )
             else:
                 logger.info(
-                    f"File {file_name} does not exist in {destination_path}. Uploading it...")
+                    f"File {file_name} does not exist in {destination_path}. Uploading it..."
+                )
 
         # Copy the file from source to destination (skip in dry-run mode)
         if dry_run:
             logger.info(
-                f"[DRY RUN] Would copy {file_name} from {source_path} to {destination_path}")
+                f"[DRY RUN] Would copy {file_name} from {source_path} to {destination_path}"
+            )
             logger.info(f"[DRY RUN] Source: s3://{bucket_name}/{source_key}")
-            logger.info(
-                f"[DRY RUN] Destination: s3://{bucket_name}/{destination_key}")
+            logger.info(f"[DRY RUN] Destination: s3://{bucket_name}/{destination_key}")
             if destination_exists:
                 logger.info(
-                    f"[DRY RUN] Note: Existing file in destination would be overwritten")
+                    "[DRY RUN] Note: Existing file in destination would be overwritten"
+                )
             return True
         else:
             try:
-                copy_source = {'Bucket': bucket_name, 'Key': source_key}
-                s3_client.copy_object(CopySource=copy_source,
-                                      Bucket=bucket_name, Key=destination_key)
+                copy_source = {"Bucket": bucket_name, "Key": source_key}
+                s3_client.copy_object(
+                    CopySource=copy_source, Bucket=bucket_name, Key=destination_key
+                )
                 if destination_exists:
                     logger.info(
-                        f"Successfully overwrote {file_name} in {destination_path} (replaced existing file)")
+                        f"Successfully overwrote {file_name} in {destination_path} (replaced existing file)"
+                    )
                 else:
                     logger.info(
-                        f"Successfully copied {file_name} from {source_path} to {destination_path} (new file)")
+                        f"Successfully copied {file_name} from {source_path} to {destination_path} (new file)"
+                    )
                 return True
             except ClientError as e:
-                error_code = e.response['Error']['Code']
-                error_message = e.response['Error'].get(
-                    'Message', 'No error message')
+                error_code = e.response["Error"]["Code"]
+                error_message = e.response["Error"].get("Message", "No error message")
 
-                if error_code == '403':
-                    logger.error(f"Permission denied (403) when copying file.")
+                if error_code == "403":
+                    logger.error("Permission denied (403) when copying file.")
                     logger.error(f"Source: s3://{bucket_name}/{source_key}")
-                    logger.error(
-                        f"Destination: s3://{bucket_name}/{destination_key}")
+                    logger.error(f"Destination: s3://{bucket_name}/{destination_key}")
                     logger.error(f"AWS Error Message: {error_message}")
                     logger.error("")
                     logger.error("This usually means:")
                     logger.error(
-                        "  1. Your AWS credentials don't have s3:GetObject permission for the source path")
+                        "  1. Your AWS credentials don't have s3:GetObject permission for the source path"
+                    )
                     logger.error(
-                        "  2. Your AWS credentials don't have s3:PutObject permission for the destination path")
+                        "  2. Your AWS credentials don't have s3:PutObject permission for the destination path"
+                    )
                     logger.error(
-                        "  3. The bucket policy or object ACL denies access for this specific path")
-                    logger.error(
-                        "  4. Your credentials are invalid or expired")
+                        "  3. The bucket policy or object ACL denies access for this specific path"
+                    )
+                    logger.error("  4. Your credentials are invalid or expired")
                     logger.error("")
                     logger.error(
-                        "Note: Path-specific permissions can cause some files to copy successfully")
+                        "Note: Path-specific permissions can cause some files to copy successfully"
+                    )
+                    logger.error("while others fail, even within the same bucket.")
                     logger.error(
-                        "while others fail, even within the same bucket.")
-                    logger.error(
-                        "Please check your AWS credentials and S3 bucket permissions for these specific paths.")
+                        "Please check your AWS credentials and S3 bucket permissions for these specific paths."
+                    )
 
                     # Log additional debug info if available
                     if logger.level <= logging.DEBUG:
@@ -393,10 +403,10 @@ def copy_component_file(
                     return False
                 else:
                     logger.error(
-                        f"AWS error ({error_code}) when copying file: {error_message}")
+                        f"AWS error ({error_code}) when copying file: {error_message}"
+                    )
                     logger.error(f"Source: s3://{bucket_name}/{source_key}")
-                    logger.error(
-                        f"Destination: s3://{bucket_name}/{destination_key}")
+                    logger.error(f"Destination: s3://{bucket_name}/{destination_key}")
                     return False
 
     except KeyError as e:
@@ -407,7 +417,9 @@ def copy_component_file(
         return False
     except Exception as e:
         logger.error(
-            f"Unexpected error occurred while processing {component_name}: {str(e)}", exc_info=True)
+            f"Unexpected error occurred while processing {component_name}: {str(e)}",
+            exc_info=True,
+        )
         return False
 
 
@@ -422,12 +434,13 @@ def load_component_mappings(json_file_path: str) -> Dict[str, Dict[str, str]]:
         Dictionary mapping component_key to configuration
     """
     try:
-        with open(json_file_path, 'r', encoding='utf-8') as f:
+        with open(json_file_path, "r", encoding="utf-8") as f:
             mappings = json.load(f)
 
         if not isinstance(mappings, list):
             raise ValueError(
-                "JSON file must contain an array of component configurations")
+                "JSON file must contain an array of component configurations"
+            )
 
         # Convert list to dictionary keyed by component_key
         mapping_dict: Dict[str, Dict[str, str]] = {}
@@ -435,29 +448,31 @@ def load_component_mappings(json_file_path: str) -> Dict[str, Dict[str, str]]:
             if isinstance(mapping, str):
                 # Simple string format (backward compatibility) - skip as it needs component_key
                 logger.warning(
-                    f"Skipping string mapping without component_key: {mapping}")
+                    f"Skipping string mapping without component_key: {mapping}"
+                )
                 continue
             elif isinstance(mapping, dict):
-                if 'component_key' not in mapping:
+                if "component_key" not in mapping:
                     logger.warning(
-                        f"Skipping mapping entry without component_key: {mapping}")
+                        f"Skipping mapping entry without component_key: {mapping}"
+                    )
                     continue
 
                 # Support both path_format and old format (file_name_pattern + path)
-                if 'path_format' in mapping:
-                    mapping_dict[mapping['component_key']] = mapping
-                elif 'file_name_pattern' in mapping and 'path' in mapping:
+                if "path_format" in mapping:
+                    mapping_dict[mapping["component_key"]] = mapping
+                elif "file_name_pattern" in mapping and "path" in mapping:
                     # Convert old format to new format
-                    path = mapping['path'].rstrip('/')
-                    pattern = mapping['file_name_pattern'].replace(
-                        '{version}', '{0}')
-                    mapping_dict[mapping['component_key']] = {
-                        'component_key': mapping['component_key'],
-                        'path_format': f"/{path}/{pattern}"
+                    path = mapping["path"].rstrip("/")
+                    pattern = mapping["file_name_pattern"].replace("{version}", "{0}")
+                    mapping_dict[mapping["component_key"]] = {
+                        "component_key": mapping["component_key"],
+                        "path_format": f"/{path}/{pattern}",
                     }
                 else:
                     logger.warning(
-                        f"Skipping mapping entry without path_format or file_name_pattern: {mapping}")
+                        f"Skipping mapping entry without path_format or file_name_pattern: {mapping}"
+                    )
             else:
                 logger.warning(f"Skipping invalid mapping entry: {mapping}")
 
@@ -484,12 +499,11 @@ def load_component_names(json_file_path: str) -> List[str]:
         List of component names
     """
     try:
-        with open(json_file_path, 'r', encoding='utf-8') as f:
+        with open(json_file_path, "r", encoding="utf-8") as f:
             component_names = json.load(f)
 
         if not isinstance(component_names, list):
-            raise ValueError(
-                "JSON file must contain an array of component names")
+            raise ValueError("JSON file must contain an array of component names")
 
         return component_names
     except FileNotFoundError:
@@ -499,14 +513,12 @@ def load_component_names(json_file_path: str) -> List[str]:
         logger.error(f"Invalid JSON in component names file: {e}")
         return []
     except Exception as e:
-        logger.error(
-            f"Failed to load component names file: {e}", exc_info=True)
+        logger.error(f"Failed to load component names file: {e}", exc_info=True)
         return []
 
 
 def find_component_mapping(
-    component_name: str,
-    mappings: Dict[str, Dict[str, str]]
+    component_name: str, mappings: Dict[str, Dict[str, str]]
 ) -> Optional[Dict[str, str]]:
     """
     Find the best matching mapping configuration for a component name.
@@ -539,7 +551,8 @@ def find_component_mapping(
 
     if best_match:
         logger.debug(
-            f"Matched component '{component_name}' to key '{best_match[0]}' (length: {best_match_length})")
+            f"Matched component '{component_name}' to key '{best_match[0]}' (length: {best_match_length})"
+        )
         return best_match[1]
 
     return None
@@ -553,7 +566,7 @@ def parse_arguments() -> argparse.Namespace:
         Parsed arguments namespace
     """
     parser = argparse.ArgumentParser(
-        description='Copy component files from dev/ to stage/ paths in S3 bucket',
+        description="Copy component files from dev/ to stage/ paths in S3 bucket",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -568,91 +581,91 @@ Examples:
   
   # Set log level to DEBUG
   python s3_component_replacer.py --log-level DEBUG
-        """
+        """,
     )
 
     parser.add_argument(
-        '--bucket',
+        "--bucket",
         type=str,
-        default='spinomenal-cdn-main',
-        help='S3 bucket name (default: spinomenal-cdn-main)'
+        default="spinomenal-cdn-main",
+        help="S3 bucket name (default: spinomenal-cdn-main)",
     )
 
     parser.add_argument(
-        '--mapping-file',
+        "--mapping-file",
         type=str,
-        default='config/components_mapping.json',
-        help='Path to component mappings JSON file (default: config/components_mapping.json)'
+        default="config/components_mapping.json",
+        help="Path to component mappings JSON file (default: config/components_mapping.json)",
     )
 
     parser.add_argument(
-        '--components-file',
+        "--components-file",
         type=str,
-        default='config/components_to_replace.json',
-        help='Path to component names JSON file (default: config/components_to_replace.json)'
+        default="config/components_to_replace.json",
+        help="Path to component names JSON file (default: config/components_to_replace.json)",
     )
 
     parser.add_argument(
-        '--region',
-        type=str,
-        default=None,
-        help='AWS region (default: auto-detect from bucket, falls back to us-east-1)'
-    )
-
-    parser.add_argument(
-        '--source-prefix',
-        type=str,
-        default='dev',
-        help='Source path prefix (e.g., dev, stage, prd). Default: dev'
-    )
-
-    parser.add_argument(
-        '--destination-prefix',
-        type=str,
-        default='stage',
-        help='Destination path prefix (e.g., stage, prd). Default: stage'
-    )
-
-    parser.add_argument(
-        '--access-key',
+        "--region",
         type=str,
         default=None,
-        help='AWS access key ID (can also use AWS_ACCESS_KEY_ID environment variable)'
+        help="AWS region (default: auto-detect from bucket, falls back to us-east-1)",
     )
 
     parser.add_argument(
-        '--secret-key',
+        "--source-prefix",
+        type=str,
+        default="dev",
+        help="Source path prefix (e.g., dev, stage, prd). Default: dev",
+    )
+
+    parser.add_argument(
+        "--destination-prefix",
+        type=str,
+        default="stage",
+        help="Destination path prefix (e.g., stage, prd). Default: stage",
+    )
+
+    parser.add_argument(
+        "--access-key",
         type=str,
         default=None,
-        help='AWS secret access key (can also use AWS_SECRET_ACCESS_KEY environment variable)'
+        help="AWS access key ID (can also use AWS_ACCESS_KEY_ID environment variable)",
     )
 
     parser.add_argument(
-        '--session-token',
+        "--secret-key",
         type=str,
         default=None,
-        help='AWS session token for temporary credentials (can also use AWS_SESSION_TOKEN environment variable)'
+        help="AWS secret access key (can also use AWS_SECRET_ACCESS_KEY environment variable)",
     )
 
     parser.add_argument(
-        '--profile',
+        "--session-token",
         type=str,
         default=None,
-        help='AWS profile name to use (from ~/.aws/credentials or AWS SSO). If not specified, uses default profile or credential chain'
+        help="AWS session token for temporary credentials (can also use AWS_SESSION_TOKEN environment variable)",
     )
 
     parser.add_argument(
-        '--log-level',
+        "--profile",
         type=str,
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-        default='INFO',
-        help='Set the logging level (default: INFO)'
+        default=None,
+        help="AWS profile name to use (from ~/.aws/credentials or AWS SSO). If not specified, uses default profile or credential chain",
     )
 
     parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='Test mode: validate and show what would be done without actually copying files to S3'
+        "--log-level",
+        type=str,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="INFO",
+        help="Set the logging level (default: INFO)",
+    )
+
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Test mode: validate and show what would be done without actually copying files to S3",
     )
 
     return parser.parse_args()
@@ -672,8 +685,11 @@ def get_bucket_region(s3_client, bucket_name: str) -> str:
     try:
         response = s3_client.head_bucket(Bucket=bucket_name)
         # The region is in the response headers
-        region = response.get('ResponseMetadata', {}).get(
-            'HTTPHeaders', {}).get('x-amz-bucket-region')
+        region = (
+            response.get("ResponseMetadata", {})
+            .get("HTTPHeaders", {})
+            .get("x-amz-bucket-region")
+        )
         if region:
             logger.info(f"Detected bucket region: {region}")
             return region
@@ -681,29 +697,31 @@ def get_bucket_region(s3_client, bucket_name: str) -> str:
             # Fallback: try to get region from bucket location
             try:
                 location = s3_client.get_bucket_location(Bucket=bucket_name)
-                region = location.get('LocationConstraint')
+                region = location.get("LocationConstraint")
                 # S3 returns None for us-east-1 (the default region)
-                if region is None or region == '':
-                    region = 'us-east-1'
+                if region is None or region == "":
+                    region = "us-east-1"
                 logger.info(f"Detected bucket region from location: {region}")
                 return region
             except Exception:
                 logger.warning(
-                    "Could not detect bucket region, defaulting to us-east-1")
-                return 'us-east-1'
+                    "Could not detect bucket region, defaulting to us-east-1"
+                )
+                return "us-east-1"
     except ClientError as e:
-        error_code = e.response.get('Error', {}).get('Code', '')
-        if error_code == '403':
+        error_code = e.response.get("Error", {}).get("Code", "")
+        if error_code == "403":
             logger.warning(
-                "Permission denied when detecting bucket region, defaulting to us-east-1")
+                "Permission denied when detecting bucket region, defaulting to us-east-1"
+            )
         else:
             logger.warning(
-                f"Could not detect bucket region ({error_code}), defaulting to us-east-1")
-        return 'us-east-1'
+                f"Could not detect bucket region ({error_code}), defaulting to us-east-1"
+            )
+        return "us-east-1"
     except Exception as e:
-        logger.warning(
-            f"Error detecting bucket region: {e}, defaulting to us-east-1")
-        return 'us-east-1'
+        logger.warning(f"Error detecting bucket region: {e}, defaulting to us-east-1")
+        return "us-east-1"
 
 
 def test_s3_access(s3_client, bucket_name: str) -> bool:
@@ -721,24 +739,26 @@ def test_s3_access(s3_client, bucket_name: str) -> bool:
         # Try to list objects in the bucket (requires s3:ListBucket permission)
         # Using a prefix that likely doesn't exist to minimize data transfer
         s3_client.list_objects_v2(
-            Bucket=bucket_name, Prefix='__test_access__', MaxKeys=1)
-        logger.info(
-            f"Successfully verified S3 access to bucket '{bucket_name}'")
+            Bucket=bucket_name, Prefix="__test_access__", MaxKeys=1
+        )
+        logger.info(f"Successfully verified S3 access to bucket '{bucket_name}'")
         return True
     except ClientError as e:
-        error_code = e.response['Error']['Code']
-        if error_code == '403':
+        error_code = e.response["Error"]["Code"]
+        if error_code == "403":
             logger.error(
-                f"Permission denied (403) when accessing bucket '{bucket_name}'")
+                f"Permission denied (403) when accessing bucket '{bucket_name}'"
+            )
             logger.error("This usually means:")
             logger.error("  1. Your AWS credentials are invalid or expired")
             logger.error(
-                "  2. Your IAM user/role doesn't have s3:ListBucket permission")
-            logger.error(
-                "  3. The bucket policy denies access to your credentials")
+                "  2. Your IAM user/role doesn't have s3:ListBucket permission"
+            )
+            logger.error("  3. The bucket policy denies access to your credentials")
         else:
             logger.warning(
-                f"Could not verify bucket access: {error_code} - {e.response['Error'].get('Message', str(e))}")
+                f"Could not verify bucket access: {error_code} - {e.response['Error'].get('Message', str(e))}"
+            )
         return False
     except Exception as e:
         logger.warning(f"Unexpected error testing bucket access: {e}")
@@ -750,7 +770,7 @@ def get_s3_client(
     secret_key: Optional[str],
     session_token: Optional[str],
     profile: Optional[str],
-    region: str
+    region: str,
 ):
     """
     Create S3 client with credentials.
@@ -774,67 +794,72 @@ def get_s3_client(
             # Verify credentials are available
             credentials = session.get_credentials()
             if credentials:
-                logger.info(
-                    f"Successfully loaded credentials from profile '{profile}'")
+                logger.info(f"Successfully loaded credentials from profile '{profile}'")
                 # Log masked access key for debugging
                 if credentials.access_key:
-                    masked_key = credentials.access_key[:4] + '...' + credentials.access_key[-4:] if len(
-                        credentials.access_key) > 8 else '****'
+                    masked_key = (
+                        credentials.access_key[:4] + "..." + credentials.access_key[-4:]
+                        if len(credentials.access_key) > 8
+                        else "****"
+                    )
                     logger.debug(f"Using access key: {masked_key}")
             else:
                 logger.warning(
-                    f"Profile '{profile}' found but no credentials available. You may need to run: aws sso login --profile {profile}")
-            return session.client('s3', region_name=region)
+                    f"Profile '{profile}' found but no credentials available. You may need to run: aws sso login --profile {profile}"
+                )
+            return session.client("s3", region_name=region)
         except Exception as e:
             logger.error(f"Failed to load profile '{profile}': {e}")
             logger.error(
-                f"Make sure you're logged in: aws sso login --profile {profile}")
+                f"Make sure you're logged in: aws sso login --profile {profile}"
+            )
             raise
 
     # Check environment variables if not provided via arguments
     if not access_key:
-        access_key = os.environ.get('AWS_ACCESS_KEY_ID')
+        access_key = os.environ.get("AWS_ACCESS_KEY_ID")
     if not secret_key:
-        secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+        secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
     if not session_token:
-        session_token = os.environ.get('AWS_SESSION_TOKEN')
+        session_token = os.environ.get("AWS_SESSION_TOKEN")
 
     # Sanitize credentials by stripping whitespace and removing all newlines
     # This prevents issues with copied/pasted credentials that may have trailing newlines
     # or newlines embedded in the middle
     if access_key:
-        access_key = access_key.strip().replace('\n', '').replace('\r', '')
+        access_key = access_key.strip().replace("\n", "").replace("\r", "")
     if secret_key:
-        secret_key = secret_key.strip().replace('\n', '').replace('\r', '')
+        secret_key = secret_key.strip().replace("\n", "").replace("\r", "")
     if session_token:
-        session_token = session_token.strip().replace('\n', '').replace('\r', '')
+        session_token = session_token.strip().replace("\n", "").replace("\r", "")
 
     # Create client with credentials if provided
     if access_key and secret_key:
-        logger.info(
-            "Using AWS credentials from arguments or environment variables")
+        logger.info("Using AWS credentials from arguments or environment variables")
         # Log masked access key for debugging
-        masked_key = access_key[:4] + '...' + \
-            access_key[-4:] if len(access_key) > 8 else '****'
+        masked_key = (
+            access_key[:4] + "..." + access_key[-4:] if len(access_key) > 8 else "****"
+        )
         logger.debug(f"Using access key: {masked_key}")
         if session_token:
             logger.debug("Using session token (temporary credentials)")
 
         client_kwargs = {
-            'aws_access_key_id': access_key,
-            'aws_secret_access_key': secret_key,
-            'region_name': region
+            "aws_access_key_id": access_key,
+            "aws_secret_access_key": secret_key,
+            "region_name": region,
         }
         # Add session token if provided (for temporary credentials)
         if session_token:
-            client_kwargs['aws_session_token'] = session_token
+            client_kwargs["aws_session_token"] = session_token
             logger.info("Using AWS session token for temporary credentials")
 
-        return boto3.client('s3', **client_kwargs)
+        return boto3.client("s3", **client_kwargs)
     else:
         logger.info(
-            "Using default AWS credential chain (AWS CLI config, IAM roles, AWS SSO, etc.)")
-        return boto3.client('s3', region_name=region)
+            "Using default AWS credential chain (AWS CLI config, IAM roles, AWS SSO, etc.)"
+        )
+        return boto3.client("s3", region_name=region)
 
 
 def main() -> int:
@@ -875,28 +900,38 @@ def main() -> int:
 
     # Sanitize credentials from command-line arguments (strip whitespace and remove newlines)
     # This handles cases where credentials are copied/pasted with embedded newlines
-    access_key = args.access_key.strip().replace(
-        '\n', '').replace('\r', '') if args.access_key else None
-    secret_key = args.secret_key.strip().replace(
-        '\n', '').replace('\r', '') if args.secret_key else None
-    session_token = args.session_token.strip().replace(
-        '\n', '').replace('\r', '') if args.session_token else None
+    access_key = (
+        args.access_key.strip().replace("\n", "").replace("\r", "")
+        if args.access_key
+        else None
+    )
+    secret_key = (
+        args.secret_key.strip().replace("\n", "").replace("\r", "")
+        if args.secret_key
+        else None
+    )
+    session_token = (
+        args.session_token.strip().replace("\n", "").replace("\r", "")
+        if args.session_token
+        else None
+    )
 
     # Determine region: use provided region, or auto-detect from bucket
-    initial_region = args.region if args.region else 'us-east-1'
+    initial_region = args.region if args.region else "us-east-1"
 
     # Initialize S3 client with initial region (us-east-1 or user-specified)
-    s3_client = get_s3_client(access_key, secret_key,
-                              session_token, args.profile, initial_region)
+    s3_client = get_s3_client(
+        access_key, secret_key, session_token, args.profile, initial_region
+    )
 
     # Auto-detect bucket region if not explicitly provided
     if not args.region:
         detected_region = get_bucket_region(s3_client, args.bucket)
         if detected_region != initial_region:
-            logger.info(
-                f"Recreating S3 client with detected region: {detected_region}")
-            s3_client = get_s3_client(access_key, secret_key,
-                                      session_token, args.profile, detected_region)
+            logger.info(f"Recreating S3 client with detected region: {detected_region}")
+            s3_client = get_s3_client(
+                access_key, secret_key, session_token, args.profile, detected_region
+            )
         logger.info(f"Using AWS region: {detected_region}")
     else:
         logger.info(f"Using AWS region: {args.region} (user-specified)")
@@ -906,18 +941,17 @@ def main() -> int:
     bucket_access_ok = test_s3_access(s3_client, args.bucket)
     if not bucket_access_ok:
         logger.error(
-            "Failed to access S3 bucket. Please check your credentials and permissions.")
+            "Failed to access S3 bucket. Please check your credentials and permissions."
+        )
         logger.error("Required IAM permissions:")
+        logger.error("  - s3:ListBucket (to verify access and check if files exist)")
+        logger.error("  - s3:GetObject (required by copy_object to read source files)")
         logger.error(
-            "  - s3:ListBucket (to verify access and check if files exist)")
-        logger.error(
-            "  - s3:GetObject (required by copy_object to read source files)")
-        logger.error(
-            "  - s3:PutObject (required by copy_object to write destination files)")
+            "  - s3:PutObject (required by copy_object to write destination files)"
+        )
         return 1
     else:
-        logger.info(
-            "✓ Initial bucket access test passed")
+        logger.info("✓ Initial bucket access test passed")
 
     if args.dry_run:
         logger.info("=" * 80)
@@ -951,13 +985,11 @@ def main() -> int:
     failed_components = []
 
     for i, component_name in enumerate(component_names, 1):
-        logger.info(
-            f"\n[{i}/{len(component_names)}] Processing: {component_name}")
+        logger.info(f"\n[{i}/{len(component_names)}] Processing: {component_name}")
         logger.info("-" * 80)
 
         # Find matching mapping
-        component_config = find_component_mapping(
-            component_name, component_mappings)
+        component_config = find_component_mapping(component_name, component_mappings)
 
         if not component_config:
             logger.error(f"No mapping found for component '{component_name}'")
@@ -966,10 +998,15 @@ def main() -> int:
             failed_components.append(component_name)
             continue
 
-        if copy_component_file(component_name, component_config, args.bucket, s3_client,
-                               source_prefix=args.source_prefix,
-                               destination_prefix=args.destination_prefix,
-                               dry_run=args.dry_run):
+        if copy_component_file(
+            component_name,
+            component_config,
+            args.bucket,
+            s3_client,
+            source_prefix=args.source_prefix,
+            destination_prefix=args.destination_prefix,
+            dry_run=args.dry_run,
+        ):
             success_count += 1
             successful_components.append(component_name)
         else:
@@ -989,7 +1026,8 @@ def main() -> int:
 
     if successful_components:
         logger.info(
-            f"\n✓ Successfully processed components ({len(successful_components)}):")
+            f"\n✓ Successfully processed components ({len(successful_components)}):"
+        )
         for comp in successful_components:
             logger.info(f"  - {comp}")
 
@@ -998,17 +1036,21 @@ def main() -> int:
         for comp in failed_components:
             logger.info(f"  - {comp}")
         logger.info(
-            "\nNote: If some components succeeded and others failed with permission errors,")
+            "\nNote: If some components succeeded and others failed with permission errors,"
+        )
         logger.info(
-            "this usually indicates path-specific IAM permissions or bucket policies.")
+            "this usually indicates path-specific IAM permissions or bucket policies."
+        )
         logger.info(
-            "Check the error messages above for the specific paths that failed.")
+            "Check the error messages above for the specific paths that failed."
+        )
 
     if not_found_count > 0:
         logger.info(f"  - No mapping found: {not_found_count}")
     if args.dry_run:
         logger.info(
-            "\nTo actually perform the copy operations, run without --dry-run flag")
+            "\nTo actually perform the copy operations, run without --dry-run flag"
+        )
     logger.info("=" * 80)
 
     return 0 if failure_count == 0 else 1
