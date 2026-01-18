@@ -84,6 +84,13 @@ python src/s3_component_replacer.py \
   --mapping-file config/custom_mapping.json \
   --components-file config/custom_components.json
 
+# Use components directly from command line
+python src/s3_component_replacer.py \
+  --profile xyz \
+  --source-prefix dev \
+  --destination-prefix stage \
+  --components FE-C2ServiceWrapper,KP-SlotMachine-V2,FE-InterService
+
 # Debug mode
 python src/s3_component_replacer.py \
   --profile xyz \
@@ -101,6 +108,7 @@ python src/s3_component_replacer.py \
 | `--profile` | AWS profile name | Default credential chain |
 | `--mapping-file` | Component mappings JSON | `config/components_mapping.json` |
 | `--components-file` | Component names JSON | `config/components_to_replace.json` |
+| `--components` | Comma-separated component keys | Overrides `--components-file` if provided |
 | `--region` | AWS region | Auto-detect |
 | `--log-level` | Logging level | `INFO` |
 | `--dry-run` | Test mode | `False` |
@@ -223,6 +231,66 @@ s3-replacer/
 - Ensure files are in `config/` directory
 - Run from project root: `cd s3-replacer && python src/s3_component_replacer.py`
 - Use absolute paths if needed: `--mapping-file /path/to/file.json`
+
+## 9. Jenkins Integration
+
+The project includes Jenkins pipeline support with parameterized builds for easy component deployment.
+
+### Setup
+
+1. **Install Required Jenkins Plugins** (for full-featured version):
+   - [Active Choices Plugin](https://plugins.jenkins.io/uno-choice/) - For dynamic component dropdown
+
+2. **Create Jenkins Pipeline Job**:
+   - Create a new "Pipeline" job in Jenkins
+   - Point to the `Jenkinsfile` in your repository
+   - Or copy the contents of `Jenkinsfile` into the pipeline script
+
+3. **Alternative (No Plugins Required)**:
+   - Use `Jenkinsfile.simple` which doesn't require Active Choices plugin
+   - Uses a text parameter for component selection
+
+### Jenkinsfile Features
+
+The Jenkins pipeline provides:
+
+- **Source Environment Dropdown**: Select source environment (`dev` or `stage`)
+- **Destination Environment Dropdown**: Select destination environment (`stage` or `live`)
+- **Component Multi-Select**: Choose multiple components from available `component_key` values
+- **AWS Profile**: Optional AWS profile name
+- **Dry Run Mode**: Test deployments without making changes
+- **S3 Bucket**: Configurable S3 bucket name
+
+### Usage
+
+1. **Build with Parameters**:
+   - Click "Build with Parameters" in Jenkins
+   - Select source and destination environments
+   - Select one or more components from the dropdown
+   - Optionally enable dry-run mode for testing
+   - Click "Build"
+
+2. **View Results**:
+   - Check console output for deployment status
+   - Successful deployments show component-by-component progress
+   - Failed deployments show detailed error messages
+
+### Helper Script
+
+List all available components:
+
+```bash
+python scripts/list_components.py
+```
+
+This outputs all available `component_key` values from `components_mapping.json`, useful for reference when selecting components in Jenkins.
+
+### Jenkinsfile Options
+
+- **`Jenkinsfile`**: Full-featured version using Active Choices plugin for dynamic component dropdown
+- **`Jenkinsfile.simple`**: Simpler version using text parameter (no plugins required)
+
+Choose based on your Jenkins setup and available plugins.
 
 
 

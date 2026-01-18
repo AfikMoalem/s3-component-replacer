@@ -613,6 +613,13 @@ Examples:
     )
 
     parser.add_argument(
+        "--components",
+        type=str,
+        default=None,
+        help="Comma-separated list of component keys to process (overrides --components-file if provided)",
+    )
+
+    parser.add_argument(
         "--region",
         type=str,
         default=None,
@@ -986,7 +993,13 @@ def main() -> int:
     logger.info(f"Loaded {len(component_mappings)} component mapping(s)")
 
     # Load component names to process
-    component_names = load_component_names(components_file_path)
+    if args.components:
+        # Use components from command line (comma-separated)
+        component_names = [comp.strip() for comp in args.components.split(",") if comp.strip()]
+        logger.info(f"Using components from command line: {len(component_names)} component(s)")
+    else:
+        # Load from file
+        component_names = load_component_names(components_file_path)
 
     if not component_names:
         logger.error("No component names found. Exiting.")
