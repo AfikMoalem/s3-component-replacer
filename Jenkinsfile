@@ -143,7 +143,8 @@ pipeline {
                     def dryRunArg = params.DRY_RUN ? "--dry-run" : ""
                     
                     bat """
-                        python src/s3_component_replacer.py ^
+                        python -m pip install --quiet boto3 botocore ^
+                        && python src/s3_component_replacer.py ^
                             --bucket ${params.S3_BUCKET} ^
                             --source-prefix ${params.SOURCE_ENV} ^
                             --destination-prefix ${params.DEST_ENV} ^
