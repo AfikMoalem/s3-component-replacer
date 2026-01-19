@@ -3,69 +3,72 @@
 pipeline {
     agent any
 
-    parameters {
-        activeChoice(
-            name: 'SOURCE_ENV',
-            description: 'Source environment',
-            choiceType: 'PT_SINGLE_SELECT',
-            filterable: false,
-            script: {
-                return ['dev', 'stage']
-            }
-        )
-        
-        activeChoiceReactiveParam(
-            name: 'DEST_ENV',
-            description: 'Destination environment (depends on source)',
-            choiceType: 'PT_SINGLE_SELECT',
-            filterable: false,
-            referencedParameters: 'SOURCE_ENV',
-            script: {
-                // Dynamic choices based on source environment
-                def sourceEnv = SOURCE_ENV ?: 'dev'
-                if (sourceEnv == 'dev') {
-                    return ['stage', 'live']
-                } else if (sourceEnv == 'stage') {
-                    return ['live']
-                } else {
-                    return ['stage', 'live']
-                }
-            }
-        )
-        
-        // Multi-line string parameter for component selection
-        // User can paste component keys, one per line or comma-separated
-        text(
-            name: 'COMPONENTS_LIST',
-            defaultValue: '',
-            description: '''Enter component keys (one per line or comma-separated):
+    properties([
+        parameters([
+            [$class: 'org.biouno.unochoice.ChoiceParameter',
+             choiceType: 'PT_SINGLE_SELECT',
+             name: 'SOURCE_ENV',
+             description: 'Source environment',
+             filterable: false,
+             script: [$class: 'GroovyScript',
+                      fallbackScript: [class: 'org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript',
+                                       script: '',
+                                       sandbox: true],
+                      script: [class: 'org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript',
+                               script: "return ['dev', 'stage']",
+                               sandbox: true]]],
+            
+            [$class: 'org.biouno.unochoice.CascadeChoiceParameter',
+             choiceType: 'PT_SINGLE_SELECT',
+             name: 'DEST_ENV',
+             description: 'Destination environment (depends on source)',
+             filterable: false,
+             referencedParameters: 'SOURCE_ENV',
+             script: [$class: 'GroovyScript',
+                      fallbackScript: [class: 'org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript',
+                                       script: '',
+                                       sandbox: true],
+                      script: [class: 'org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript',
+                               script: '''
+                                   def sourceEnv = SOURCE_ENV ?: 'dev'
+                                   if (sourceEnv == 'dev') {
+                                       return ['stage', 'live']
+                                   } else if (sourceEnv == 'stage') {
+                                       return ['live']
+                                   } else {
+                                       return ['stage', 'live']
+                                   }
+                               ''',
+                               sandbox: true]]],
+            
+            [$class: 'TextParameterDefinition',
+             name: 'COMPONENTS_LIST',
+             defaultValue: '',
+             description: '''Enter component keys (one per line or comma-separated):
 Examples:
 FE-C2ServiceWrapper
 KP-SlotMachine-V2
 FE-InterService
 
 Or comma-separated:
-FE-C2ServiceWrapper, KP-SlotMachine-V2, FE-InterService'''
-        )
-        
-        string(
-            name: 'AWS_PROFILE',
-            defaultValue: '',
-            description: 'AWS profile name (leave empty to use default credential chain)'
-        )
-        
-        booleanParam(
-            name: 'DRY_RUN',
-            defaultValue: false,
-            description: 'Dry run mode (test without making changes)'
-        )
-        
-        string(
-            name: 'S3_BUCKET',
-            defaultValue: 'spinomenal-cdn-main',
-            description: 'S3 bucket name'
-        )
-    }
+FE-C2ServiceWrapper, KP-SlotMachine-V2, FE-InterService'''],
+            
+            [$class: 'StringParameterDefinition',
+             name: 'AWS_PROFILE',
+             defaultValue: '',
+             description: 'AWS profile name (leave empty to use default credential chain)'],
+            
+            [$class: 'BooleanParameterDefinition',
+             name: 'DRY_RUN',
+             defaultValue: false,
+             description: 'Dry run mode (test without making changes)'],
+            
+            [$class: 'StringParameterDefinition',
+             name: 'S3_BUCKET',
+             defaultValue: 'spinomenal-cdn-main',
+             description: 'S3 bucket name']
+        ])
+    ])
 
     environment {
         PYTHONUNBUFFERED = '1'
