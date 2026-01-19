@@ -39,18 +39,19 @@ properties([
                            ''',
                            sandbox: true]]],
         
-        [$class: 'org.biouno.unochoice.ChoiceParameter',
-         choiceType: 'PT_MULTI_SELECT',
+        [$class: 'TextParameterDefinition',
          name: 'COMPONENTS_LIST',
-         description: 'Select one or more components to deploy',
-         filterable: true,
-         script: [$class: 'GroovyScript',
-                  fallbackScript: [class: 'org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript',
-                                   script: 'return ["FE-AutoBetMenu", "FE-BetSlip", "FE-BuyFeature", "FE-C2LoadingWrapper", "FE-C2ServiceWrapper", "FE-FreeRounds", "FE-GameLoadingScreen", "FE-InterService", "FE-KremboBuyFeature", "FE-KremboGameLoadingScreen", "FE-KremboGameRibbon", "FE-KremboFeatureBox", "FE-KremboLoadingWrapper", "FE-KremboMessageScreen", "FE-KremboServiceWrapper", "FE-KremboRequestLoadingScreen", "FE-MessageScreen", "FE-PaytableHelpPage", "FE-PaytableHelpage", "FE-PaytableLoader", "FE-PromoTool", "FE-RequestLoadingScreen", "FE-FeatureBox", "FE-TicketGenerator", "FE-TicketHistory", "KP-BookOfPiggyBank", "KP-BookOfPiggyBank-V2", "KP-BookOfPiggyBankV2", "KP-BookOfRebirth", "KP-BookOfRebirth-V2", "KP-BookOfRebirthV2", "KP-ClassicFruits-V2", "KP-DragonsCharms", "KP-DragonsCharms-V2", "KP-DragonsCharmsV2", "KP-FruitsCollection", "KP-FruitsCollection-10E-V2", "KP-FruitsCollection-V2", "KP-HoldNHit3x3-V2", "KP-HoldNHitV2", "KP-KitsunesScrollsV2", "KP-Krembo", "KP-Krembo-V2", "KP-KremboCore", "KP-KremboV2", "KP-MajesticKing", "KP-MajesticKing-V2", "KP-OneReel", "KP-OneReel-V2", "KP-Phaser", "KP-PhaserEngine", "KP-PowerHoldNHit-V2", "KP-Retro777", "KP-Retro777-V2", "KP-SnatchTheGold-V2", "KP-SlotMachine", "KP-SlotMachine-V2", "KP-SlotMachineV2", "KP-Slotmachine", "KP-Slotmachine-V2", "KP-StoryOfGaia", "KP-StoryOfGaia-V2", "KP-StoryOfGaiaV2", "KP-Tower", "KP-Tower-V2", "KP-TroutsTreasure", "KP-TroutsTreasure-V2", "KP-WolfFang", "KP-WolfFang-V2"]',
-                                   sandbox: true],
-                  script: [class: 'org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript',
-                           script: 'return ["FE-AutoBetMenu", "FE-BetSlip", "FE-BuyFeature", "FE-C2LoadingWrapper", "FE-C2ServiceWrapper", "FE-FreeRounds", "FE-GameLoadingScreen", "FE-InterService", "FE-KremboBuyFeature", "FE-KremboGameLoadingScreen", "FE-KremboGameRibbon", "FE-KremboFeatureBox", "FE-KremboLoadingWrapper", "FE-KremboMessageScreen", "FE-KremboServiceWrapper", "FE-KremboRequestLoadingScreen", "FE-MessageScreen", "FE-PaytableHelpPage", "FE-PaytableHelpage", "FE-PaytableLoader", "FE-PromoTool", "FE-RequestLoadingScreen", "FE-FeatureBox", "FE-TicketGenerator", "FE-TicketHistory", "KP-BookOfPiggyBank", "KP-BookOfPiggyBank-V2", "KP-BookOfPiggyBankV2", "KP-BookOfRebirth", "KP-BookOfRebirth-V2", "KP-BookOfRebirthV2", "KP-ClassicFruits-V2", "KP-DragonsCharms", "KP-DragonsCharms-V2", "KP-DragonsCharmsV2", "KP-FruitsCollection", "KP-FruitsCollection-10E-V2", "KP-FruitsCollection-V2", "KP-HoldNHit3x3-V2", "KP-HoldNHitV2", "KP-KitsunesScrollsV2", "KP-Krembo", "KP-Krembo-V2", "KP-KremboCore", "KP-KremboV2", "KP-MajesticKing", "KP-MajesticKing-V2", "KP-OneReel", "KP-OneReel-V2", "KP-Phaser", "KP-PhaserEngine", "KP-PowerHoldNHit-V2", "KP-Retro777", "KP-Retro777-V2", "KP-SnatchTheGold-V2", "KP-SlotMachine", "KP-SlotMachine-V2", "KP-SlotMachineV2", "KP-Slotmachine", "KP-Slotmachine-V2", "KP-StoryOfGaia", "KP-StoryOfGaia-V2", "KP-StoryOfGaiaV2", "KP-Tower", "KP-Tower-V2", "KP-TroutsTreasure", "KP-TroutsTreasure-V2", "KP-WolfFang", "KP-WolfFang-V2"]',
-                           sandbox: true]]],
+         defaultValue: '',
+         description: '''Enter component keys (one per line or comma-separated):
+Examples:
+FE-C2ServiceWrapper-123
+KP-SlotMachine-V2-456
+FE-InterService-789
+
+Or comma-separated:
+FE-C2ServiceWrapper-123, KP-SlotMachine-V2-456, FE-InterService-789
+
+Note: Component names must include version numbers (e.g., -123, -456)'''],
         
         [$class: 'StringParameterDefinition',
          name: 'AWS_PROFILE',
@@ -80,32 +81,31 @@ pipeline {
         stage('Parse Components') {
             steps {
                 script {
-                    if (!params.COMPONENTS_LIST) {
-                        error("No components specified. Please select at least one component.")
+                    if (!params.COMPONENTS_LIST || params.COMPONENTS_LIST.trim().isEmpty()) {
+                        error("No components specified. Please provide at least one component key.")
                     }
                     
-                    // Active Choices multi-select can return array or comma-separated string
+                    // Parse components (support both newline and comma-separated)
+                    def componentsText = params.COMPONENTS_LIST.trim()
                     def components = []
-                    if (params.COMPONENTS_LIST instanceof List || params.COMPONENTS_LIST instanceof String[]) {
-                        components = params.COMPONENTS_LIST.collect { it.toString().trim() }.findAll { it }
-                    } else {
-                        // Comma-separated string
-                        def componentsText = params.COMPONENTS_LIST.toString().trim()
-                        if (componentsText.isEmpty()) {
-                            error("No components specified. Please select at least one component.")
-                        }
+                    
+                    // Try comma-separated first
+                    if (componentsText.contains(',')) {
                         components = componentsText.split(',').collect { it.trim() }.findAll { it }
+                    } else {
+                        // Newline-separated
+                        components = componentsText.split('\n').collect { it.trim() }.findAll { it }
                     }
                     
                     if (components.isEmpty()) {
-                        error("No valid components found. Please check your selection.")
+                        error("No valid components found. Please check your input.")
                     }
                     
                     // Store in environment variable
                     env.SELECTED_COMPONENTS = components.join(',')
                     env.COMPONENTS_COUNT = components.size().toString()
                     
-                    echo "Selected ${components.size()} component(s):"
+                    echo "Parsed ${components.size()} component(s):"
                     components.each { comp ->
                         echo "  - ${comp}"
                     }
