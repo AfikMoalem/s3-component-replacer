@@ -39,17 +39,27 @@ properties([
                            ''',
                            sandbox: true]]],
         
-        [$class: 'TextParameterDefinition',
+        [$class: 'org.biouno.unochoice.ChoiceParameter',
+         choiceType: 'PT_CHECKBOX',
          name: 'COMPONENTS_LIST',
-         defaultValue: '',
-         description: '''Enter component keys (one per line or comma-separated):
-Examples:
-FE-C2ServiceWrapper
-KP-SlotMachine-V2
-FE-InterService
-
-Or comma-separated:
-FE-C2ServiceWrapper, KP-SlotMachine-V2, FE-InterService'''],
+         description: 'Select one or more components to deploy',
+         filterable: true,
+         script: [$class: 'GroovyScript',
+                  fallbackScript: [class: 'org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript',
+                                   script: '',
+                                   sandbox: true],
+                  script: [class: 'org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript',
+                           script: '''
+                               import groovy.json.JsonSlurper
+                               def mappingFile = new File("config/components_mapping.json")
+                               if (!mappingFile.exists()) {
+                                   return ["Error: components_mapping.json not found"]
+                               }
+                               def jsonSlurper = new JsonSlurper()
+                               def components = jsonSlurper.parse(mappingFile)
+                               return components.collect { it.component_key }.sort()
+                           ''',
+                           sandbox: true]]],
         
         [$class: 'StringParameterDefinition',
          name: 'AWS_PROFILE',
@@ -80,30 +90,21 @@ pipeline {
             steps {
                 script {
                     if (!params.COMPONENTS_LIST || params.COMPONENTS_LIST.trim().isEmpty()) {
-                        error("No components specified. Please provide at least one component key.")
+                        error("No components specified. Please select at least one component.")
                     }
                     
-                    // Parse components (support both newline and comma-separated)
-                    def componentsText = params.COMPONENTS_LIST.trim()
-                    def components = []
-                    
-                    // Try comma-separated first
-                    if (componentsText.contains(',')) {
-                        components = componentsText.split(',').collect { it.trim() }.findAll { it }
-                    } else {
-                        // Newline-separated
-                        components = componentsText.split('\n').collect { it.trim() }.findAll { it }
-                    }
+                    // Active Choices checkbox returns comma-separated string
+                    def components = params.COMPONENTS_LIST.split(',').collect { it.trim() }.findAll { it }
                     
                     if (components.isEmpty()) {
-                        error("No valid components found. Please check your input.")
+                        error("No valid components found. Please check your selection.")
                     }
                     
                     // Store in environment variable
                     env.SELECTED_COMPONENTS = components.join(',')
                     env.COMPONENTS_COUNT = components.size().toString()
                     
-                    echo "Parsed ${components.size()} component(s):"
+                    echo "Selected ${components.size()} component(s):"
                     components.each { comp ->
                         echo "  - ${comp}"
                     }
