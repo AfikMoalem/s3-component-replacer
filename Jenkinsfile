@@ -142,15 +142,15 @@ pipeline {
                     def profileArg = params.AWS_PROFILE ? "--profile ${params.AWS_PROFILE}" : ""
                     def dryRunArg = params.DRY_RUN ? "--dry-run" : ""
                     
-                    sh """
-                        python src/s3_component_replacer.py \\
-                            --bucket ${params.S3_BUCKET} \\
-                            --source-prefix ${params.SOURCE_ENV} \\
-                            --destination-prefix ${params.DEST_ENV} \\
-                            --mapping-file config/components_mapping.json \\
-                            --components ${env.SELECTED_COMPONENTS} \\
-                            ${profileArg} \\
-                            ${dryRunArg} \\
+                    bat """
+                        python src/s3_component_replacer.py ^
+                            --bucket ${params.S3_BUCKET} ^
+                            --source-prefix ${params.SOURCE_ENV} ^
+                            --destination-prefix ${params.DEST_ENV} ^
+                            --mapping-file config/components_mapping.json ^
+                            --components ${env.SELECTED_COMPONENTS} ^
+                            ${profileArg} ^
+                            ${dryRunArg} ^
                             --log-level INFO
                     """
                 }
