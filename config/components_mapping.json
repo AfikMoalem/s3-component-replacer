@@ -216,6 +216,14 @@
         "path_format": "/krembo/krembo_componentsV2/game_class/wolffang/wolffang.{0}.min.js"
     },
     {
+        "component_key": "KP-DemiGodsV",
+        "path_format": "/krembo/krembo_componentsV2/game_class/demigodsv/demigodsv.{0}.min.js"
+    },
+    {
+        "component_key": "KP-EightyOneMultiply-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/eightyonemultiply/eightyonemultiply.{0}.min.js"
+    },
+    {
         "component_key": "KP-DragonsCharms",
         "path_format": "/krembo/krembo_components/game_class/DragonsCharms/dragonscharmsclass.{0}.min.js"
     },
@@ -240,6 +248,10 @@
         "path_format": "/krembo/krembo_componentsV2/game_class/classicfruits/classicfruits.{0}.min.js"
     },
     {
+        "component_key": "KP-CascadeClass-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/cascadeclass/cascadeclass.{0}.min.js"
+    },
+    {
         "component_key": "KP-HoldNHitV2",
         "path_format": "/krembo/krembo_componentsV2/game_class/holdnhit/holdnhit.{0}.min.js"
     },
@@ -254,6 +266,10 @@
     {
         "component_key": "KP-HoldNHit3x3-V2",
         "path_format": "/krembo/krembo_componentsV2/game_class/holdnhit3x3/holdnhit3x3.{0}.min.js"
+    },
+    {
+        "component_key": "KP-HoldNHit3Features-V2",
+        "path_format": "/krembo/krembo_componentsV2/game_class/holdnhit3features/holdnhit3features.{0}.min.js"
     },
     {
         "component_key": "KP-MajesticKing",
