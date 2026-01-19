@@ -40,25 +40,16 @@ properties([
                            sandbox: true]]],
         
         [$class: 'org.biouno.unochoice.ChoiceParameter',
-         choiceType: 'PT_CHECKBOX',
+         choiceType: 'PT_MULTI_SELECT',
          name: 'COMPONENTS_LIST',
          description: 'Select one or more components to deploy',
          filterable: true,
          script: [$class: 'GroovyScript',
                   fallbackScript: [class: 'org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript',
-                                   script: '',
+                                   script: 'return ["FE-AutoBetMenu", "FE-BetSlip", "FE-BuyFeature", "FE-C2LoadingWrapper", "FE-C2ServiceWrapper", "FE-FreeRounds", "FE-GameLoadingScreen", "FE-InterService", "FE-KremboBuyFeature", "FE-KremboGameLoadingScreen", "FE-KremboGameRibbon", "FE-KremboFeatureBox", "FE-KremboLoadingWrapper", "FE-KremboMessageScreen", "FE-KremboServiceWrapper", "FE-KremboRequestLoadingScreen", "FE-MessageScreen", "FE-PaytableHelpPage", "FE-PaytableHelpage", "FE-PaytableLoader", "FE-PromoTool", "FE-RequestLoadingScreen", "FE-FeatureBox", "FE-TicketGenerator", "FE-TicketHistory", "KP-BookOfPiggyBank", "KP-BookOfPiggyBank-V2", "KP-BookOfPiggyBankV2", "KP-BookOfRebirth", "KP-BookOfRebirth-V2", "KP-BookOfRebirthV2", "KP-ClassicFruits-V2", "KP-DragonsCharms", "KP-DragonsCharms-V2", "KP-DragonsCharmsV2", "KP-FruitsCollection", "KP-FruitsCollection-10E-V2", "KP-FruitsCollection-V2", "KP-HoldNHit3x3-V2", "KP-HoldNHitV2", "KP-KitsunesScrollsV2", "KP-Krembo", "KP-Krembo-V2", "KP-KremboCore", "KP-KremboV2", "KP-MajesticKing", "KP-MajesticKing-V2", "KP-OneReel", "KP-OneReel-V2", "KP-Phaser", "KP-PhaserEngine", "KP-PowerHoldNHit-V2", "KP-Retro777", "KP-Retro777-V2", "KP-SnatchTheGold-V2", "KP-SlotMachine", "KP-SlotMachine-V2", "KP-SlotMachineV2", "KP-Slotmachine", "KP-Slotmachine-V2", "KP-StoryOfGaia", "KP-StoryOfGaia-V2", "KP-StoryOfGaiaV2", "KP-Tower", "KP-Tower-V2", "KP-TroutsTreasure", "KP-TroutsTreasure-V2", "KP-WolfFang", "KP-WolfFang-V2"]',
                                    sandbox: true],
                   script: [class: 'org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript',
-                           script: '''
-                               import groovy.json.JsonSlurper
-                               def mappingFile = new File("config/components_mapping.json")
-                               if (!mappingFile.exists()) {
-                                   return ["Error: components_mapping.json not found"]
-                               }
-                               def jsonSlurper = new JsonSlurper()
-                               def components = jsonSlurper.parse(mappingFile)
-                               return components.collect { it.component_key }.sort()
-                           ''',
+                           script: 'return ["FE-AutoBetMenu", "FE-BetSlip", "FE-BuyFeature", "FE-C2LoadingWrapper", "FE-C2ServiceWrapper", "FE-FreeRounds", "FE-GameLoadingScreen", "FE-InterService", "FE-KremboBuyFeature", "FE-KremboGameLoadingScreen", "FE-KremboGameRibbon", "FE-KremboFeatureBox", "FE-KremboLoadingWrapper", "FE-KremboMessageScreen", "FE-KremboServiceWrapper", "FE-KremboRequestLoadingScreen", "FE-MessageScreen", "FE-PaytableHelpPage", "FE-PaytableHelpage", "FE-PaytableLoader", "FE-PromoTool", "FE-RequestLoadingScreen", "FE-FeatureBox", "FE-TicketGenerator", "FE-TicketHistory", "KP-BookOfPiggyBank", "KP-BookOfPiggyBank-V2", "KP-BookOfPiggyBankV2", "KP-BookOfRebirth", "KP-BookOfRebirth-V2", "KP-BookOfRebirthV2", "KP-ClassicFruits-V2", "KP-DragonsCharms", "KP-DragonsCharms-V2", "KP-DragonsCharmsV2", "KP-FruitsCollection", "KP-FruitsCollection-10E-V2", "KP-FruitsCollection-V2", "KP-HoldNHit3x3-V2", "KP-HoldNHitV2", "KP-KitsunesScrollsV2", "KP-Krembo", "KP-Krembo-V2", "KP-KremboCore", "KP-KremboV2", "KP-MajesticKing", "KP-MajesticKing-V2", "KP-OneReel", "KP-OneReel-V2", "KP-Phaser", "KP-PhaserEngine", "KP-PowerHoldNHit-V2", "KP-Retro777", "KP-Retro777-V2", "KP-SnatchTheGold-V2", "KP-SlotMachine", "KP-SlotMachine-V2", "KP-SlotMachineV2", "KP-Slotmachine", "KP-Slotmachine-V2", "KP-StoryOfGaia", "KP-StoryOfGaia-V2", "KP-StoryOfGaiaV2", "KP-Tower", "KP-Tower-V2", "KP-TroutsTreasure", "KP-TroutsTreasure-V2", "KP-WolfFang", "KP-WolfFang-V2"]',
                            sandbox: true]]],
         
         [$class: 'StringParameterDefinition',
@@ -89,12 +80,22 @@ pipeline {
         stage('Parse Components') {
             steps {
                 script {
-                    if (!params.COMPONENTS_LIST || params.COMPONENTS_LIST.trim().isEmpty()) {
+                    if (!params.COMPONENTS_LIST) {
                         error("No components specified. Please select at least one component.")
                     }
                     
-                    // Active Choices checkbox returns comma-separated string
-                    def components = params.COMPONENTS_LIST.split(',').collect { it.trim() }.findAll { it }
+                    // Active Choices multi-select can return array or comma-separated string
+                    def components = []
+                    if (params.COMPONENTS_LIST instanceof List || params.COMPONENTS_LIST instanceof String[]) {
+                        components = params.COMPONENTS_LIST.collect { it.toString().trim() }.findAll { it }
+                    } else {
+                        // Comma-separated string
+                        def componentsText = params.COMPONENTS_LIST.toString().trim()
+                        if (componentsText.isEmpty()) {
+                            error("No components specified. Please select at least one component.")
+                        }
+                        components = componentsText.split(',').collect { it.trim() }.findAll { it }
+                    }
                     
                     if (components.isEmpty()) {
                         error("No valid components found. Please check your selection.")
