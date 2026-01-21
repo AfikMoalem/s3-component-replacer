@@ -48,9 +48,6 @@ FE-C2ServiceWrapper-123
 KP-SlotMachine-V2-456
 FE-InterService-789
 
-Or comma-separated:
-FE-C2ServiceWrapper-123, KP-SlotMachine-V2-456, FE-InterService-789
-
 Note: Component names must include version numbers (e.g., -123, -456)'''],
         
         [$class: 'StringParameterDefinition',
